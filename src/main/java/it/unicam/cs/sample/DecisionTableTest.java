@@ -1,4 +1,4 @@
-package com.sample;
+package it.unicam.cs.sample;
 
 import org.kie.api.KieServices;
 import org.kie.api.runtime.KieContainer;
@@ -7,14 +7,14 @@ import org.kie.api.runtime.KieSession;
 /**
  * This is a sample class to launch a rule.
  */
-public class DroolsTest {
+public class DecisionTableTest {
 
     public static final void main(String[] args) {
         try {
             // load up the knowledge base
 	        KieServices ks = KieServices.Factory.get();
     	    KieContainer kContainer = ks.getKieClasspathContainer();
-        	KieSession kSession = kContainer.newKieSession("ksession-rules");
+        	KieSession kSession = kContainer.newKieSession("ksession-dtables");
 
             // go !
             Message message = new Message();

@@ -1,4 +1,4 @@
-package com.sample;
+package it.unicam.cs.sample;
 
 import org.kie.api.KieServices;
 import org.kie.api.runtime.KieContainer;
@@ -17,7 +17,7 @@ public class ProcessTest {
         	KieSession kSession = kContainer.newKieSession("ksession-process");
 
             // start a new process instance
-            kSession.startProcess("com.sample.bpmn.hello");
+            kSession.startProcess("it.unicam.cs.process.sample.bpmn.hello");
         } catch (Throwable t) {
             t.printStackTrace();
         }

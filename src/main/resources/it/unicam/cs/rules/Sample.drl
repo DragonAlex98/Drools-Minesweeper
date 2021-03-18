@@ -1,6 +1,6 @@
 package com.sample
  
-import com.sample.DroolsTest.Message;
+import it.unicam.cs.sample.DroolsTest.Message;
  
 rule "Hello World"
     when
