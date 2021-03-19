@@ -10,6 +10,6 @@ public class Bomb extends Square {
 	
 	@Override
 	public String toString() {
-		return " [B]";
+		return String.format("[%-9s B]", this.getState());
 	}
 }

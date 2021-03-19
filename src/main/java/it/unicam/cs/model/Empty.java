@@ -10,6 +10,6 @@ public class Empty extends Square {
 	
 	@Override
 	public String toString() {
-		return " [ ]";
+		return String.format("[%-9s  ]", this.getState());
 	}
 }
