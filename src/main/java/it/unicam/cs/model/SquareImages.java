@@ -65,20 +65,28 @@ public class SquareImages {
 				switch (((Number) square).getNeighbourBombsCount()) {
 				case 1:
 					image = images.get("1");
+					break;
 				case 2:
 					image = images.get("2");
+					break;
 				case 3:
 					image = images.get("3");
+					break;
 				case 4:
 					image = images.get("4");
+					break;
 				case 5:
 					image = images.get("5");
+					break;
 				case 6:
 					image = images.get("6");
+					break;
 				case 7:
 					image = images.get("7");
+					break;
 				case 8:
 					image = images.get("8");
+					break;
 				}
 			}
 		}

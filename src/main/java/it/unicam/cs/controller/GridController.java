@@ -64,7 +64,7 @@ public class GridController {
 		if (square.getType() == SquareType.BOMB) {
 			square.setState(SquareState.EXPLODED);
 			grid.getGridAsStream().filter(s -> s.getType() == SquareType.BOMB && s.getState() == SquareState.COVERED)
-					.forEach(s -> s.setState(SquareState.EXPLODED));
+					.forEach(s -> s.setState(SquareState.UNCOVERED));
 			return UncoverResult.BOMB;
 		}
 
