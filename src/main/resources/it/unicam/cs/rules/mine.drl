@@ -35,10 +35,10 @@ end
 rule "empty square"
 
 	when
-		$square : Square(type ==  SquareType.EMPTY)
-		$grid : Grid( )
+		$location : Location()
+		$grid : Grid(getSquareAt($location).getState() == SquareType.EMPTY && state = covered)
 	then
-		
+		$grid.uncoverEmptySquare($location)
 end
 */
 
