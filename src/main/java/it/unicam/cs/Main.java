@@ -3,13 +3,15 @@ package it.unicam.cs;
 import java.util.Scanner;
 
 import it.unicam.cs.controller.GridController;
+import it.unicam.cs.model.Configuration;
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
 
 public class Main {
 
 	public static void main(String[] args) {
-		Grid grid = new Grid(9, 9, 10);
+		Configuration config = new Configuration(9, 9, 10);
+		Grid grid = new Grid(config);
 		grid.populate();
 		System.out.println(grid);
 		GridController controller = new GridController(grid);

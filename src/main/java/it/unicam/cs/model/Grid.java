@@ -15,13 +15,12 @@ import it.unicam.cs.enumeration.SquareType;
 public class Grid {
 	/** Matrix containing the squares **/
 	private Square[][] grid;
-	private final int N_ROWS, N_COLUMNS, N_BOMBS;
+	/** The configuration of the grid **/
+	Configuration config;
 	private final Random RANDOM = new Random();
 
-	public Grid(int rows, int columns, int bombs) {
-		this.N_ROWS = rows;
-		this.N_COLUMNS = columns;
-		this.N_BOMBS = bombs;
+	public Grid(Configuration config) {
+		this.config = config;
 	}
 
 	/**
@@ -73,12 +72,12 @@ public class Grid {
 	}
 
 	/**
-	 * Methon to obtain a random Location.
+	 * Method to obtain a random Location.
 	 * 
 	 * @return The random Location.
 	 */
 	private Location getRandomPoint() {
-		return new Location(RANDOM.nextInt(N_ROWS), RANDOM.nextInt(N_COLUMNS));
+		return new Location(RANDOM.nextInt(config.getN_ROWS()), RANDOM.nextInt(config.getN_COLUMNS()));
 	}
 
 	/**
@@ -88,8 +87,8 @@ public class Grid {
 	 * @return True if the location is inside the grid, false otherwise.
 	 */
 	private boolean isLocationInsideGrid(Location location) {
-		return location.getRow() >= 0 && location.getRow() < N_ROWS && location.getColumn() >= 0
-				&& location.getColumn() < N_COLUMNS;
+		return location.getRow() >= 0 && location.getRow() < config.getN_ROWS() && location.getColumn() >= 0
+				&& location.getColumn() < config.getN_COLUMNS();
 	}
 
 	/**
@@ -108,9 +107,9 @@ public class Grid {
 	 * Method to populate the grid according to the Configuration.
 	 */
 	public void populate() {
-		this.grid = new Square[N_ROWS][N_COLUMNS];
+		this.grid = new Square[config.getN_ROWS()][config.getN_COLUMNS()];
 
-		for (int i = 0; i < N_BOMBS; i++) {
+		for (int i = 0; i < config.getN_BOMBS(); i++) {
 			Location newPoint;
 			do {
 				newPoint = getRandomPoint();
@@ -118,8 +117,8 @@ public class Grid {
 			setSquareAt(new Bomb(newPoint), newPoint);
 		}
 
-		for (int r = 0; r < N_ROWS; r++) {
-			for (int c = 0; c < N_COLUMNS; c++) {
+		for (int r = 0; r < config.getN_ROWS(); r++) {
+			for (int c = 0; c < config.getN_COLUMNS(); c++) {
 				Location location = new Location(r, c);
 				if (getSquareAt(location) == null) {
 					int numOfBombs = getNeighbourBombsCount(new Location(r, c));
@@ -136,8 +135,8 @@ public class Grid {
 	@Override
 	public String toString() {
 		String s = "";
-		for (int r = 0; r < N_ROWS; r++) {
-			for (int c = 0; c < N_COLUMNS; c++) {
+		for (int r = 0; r < config.getN_ROWS(); r++) {
+			for (int c = 0; c < config.getN_COLUMNS(); c++) {
 				s += getSquareAt(new Location(r, c));
 			}
 			s += "\r\n";

@@ -23,7 +23,7 @@ public class GridController {
 	}
 
 	/**
-	 * Method to setup the grid.
+	 * Method used to setup the grid.
 	 */
 	public void initializeGrid() {
 		grid.populate();
@@ -33,7 +33,7 @@ public class GridController {
 	 * Method used to uncover an empty square placed in a certain location (possibly
 	 * it also uncovers the neighbors that are not Bomb).
 	 * 
-	 * @param location The location to uncover.
+	 * @param location The location of the Empty Square to uncover.
 	 */
 	private void uncoverEmptySquare(Location location) {
 		Square square = grid.getSquareAt(location);
@@ -50,6 +50,8 @@ public class GridController {
 	}
 
 	/**
+	 * Method used to uncover a square placed in a certain location.
+	 * 
 	 * @param location The location to uncover.
 	 * @return The result of the uncovery.
 	 */
