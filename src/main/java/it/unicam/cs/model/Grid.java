@@ -131,6 +131,10 @@ public class Grid {
 			}
 		}
 	}
+	
+	public boolean isPopulated() {
+		return this.grid == null ? false : true; 
+	}
 
 	@Override
 	public String toString() {

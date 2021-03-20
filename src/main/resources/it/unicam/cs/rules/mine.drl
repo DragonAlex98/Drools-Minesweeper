@@ -1,0 +1,52 @@
+//created on: 20 mar 2021
+package test
+
+//list any import classes here.
+import it.unicam.cs.model.Grid;
+import it.unicam.cs.model.Square;
+import it.unicam.cs.enumeration.SquareType;
+
+
+//declare any global variables here
+
+
+
+
+rule "Your First Rule"
+
+    when
+        Grid( )
+    then
+        //actions
+        System.out.println("Grid Created!");
+
+end
+
+rule "Populate Grid"
+
+	when
+		$grid : Grid(isPopulated() == false)
+	then
+		$grid.populate();
+		System.out.println($grid);
+end
+
+/*
+rule "empty square"
+
+	when
+		$square : Square(type ==  SquareType.EMPTY)
+		$grid : Grid( )
+	then
+		
+end
+*/
+
+rule "Your Second Rule"
+    //include attributes such as "salience" here...
+    when
+        //conditions
+    then
+        //actions
+
+end
