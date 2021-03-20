@@ -7,6 +7,7 @@ import java.util.Random;
 import java.util.stream.Stream;
 
 import it.unicam.cs.enumeration.SquareType;
+import lombok.Getter;
 
 /**
  * Class to represent the grid of the game containing the Squares.
@@ -16,7 +17,8 @@ public class Grid {
 	/** Matrix containing the squares **/
 	private Square[][] grid;
 	/** The configuration of the grid **/
-	Configuration config;
+	@Getter
+	private Configuration config;
 	private final Random RANDOM = new Random();
 
 	public Grid(Configuration config) {
