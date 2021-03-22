@@ -8,7 +8,8 @@ import java.awt.Image;
 import java.awt.Point;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.image.BufferedImage;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.JPanel;
 
@@ -19,11 +20,14 @@ import lombok.Getter;
 
 public class MainPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
+	
 	private Grid grid;
 	@Getter
 	private float squareWidth;
 	@Getter
 	private float squareHeight;
+
+	private Map<String, Image> images = new HashMap<String, Image>();
 
 	public MainPanel(Grid grid) {
 		this.grid = grid;
@@ -31,8 +35,15 @@ public class MainPanel extends JPanel {
 
 			@Override
 			public void componentResized(ComponentEvent e) {
-				squareWidth = (float)getWidth() / grid.getConfig().getN_COLUMNS();
-				squareHeight = (float)getHeight() / grid.getConfig().getN_ROWS();
+				float internalSquareWidth = (float)getWidth() / grid.getConfig().getN_COLUMNS();
+				float internalSquareHeight = (float)getHeight() / grid.getConfig().getN_ROWS();
+				images.clear();
+				SquareImages.getInstance().getImages().forEach((k, v) -> {
+					Image coveredImageResized = v.getScaledInstance((int)internalSquareWidth, (int)internalSquareHeight, Image.SCALE_AREA_AVERAGING);					
+					MainPanel.this.images.put(k, coveredImageResized);
+				});
+				squareWidth = internalSquareWidth;
+				squareHeight = internalSquareHeight;
 			}
 		});		
 	}
@@ -50,9 +61,8 @@ public class MainPanel extends JPanel {
 		g.fillRect(0, 0, getWidth(), getHeight());
 
 		grid.getGridAsStream().forEach(s -> {
-			BufferedImage im = SquareImages.getInstance().getSquareImage(s);
-			Image coveredImageResized = im.getScaledInstance((int)squareWidth, (int)squareHeight, Image.SCALE_AREA_AVERAGING);
-			g.drawImage(coveredImageResized, (int)(squareWidth*s.getLocation().getColumn()), (int)(squareHeight*s.getLocation().getRow()), null);
+			String string = SquareImages.getInstance().getSquareImage(s);
+			g.drawImage(images.get(string), (int)(squareWidth*s.getLocation().getColumn()), (int)(squareHeight*s.getLocation().getRow()), null);
 			return;
 		});
 		

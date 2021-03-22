@@ -47,6 +47,10 @@ public class SquareImages {
 		}
 		return instance;
 	}
+	
+	public Map<String, BufferedImage> getImages() {
+		return this.images;
+	}
 
 	/**
 	 * Method to return the corresponding Image associated to the given Square.
@@ -54,23 +58,22 @@ public class SquareImages {
 	 * @param square The Square to associate the Image with.
 	 * @return The Image associated to the given Square.
 	 */
-	public BufferedImage getSquareImage(Square square) {
-		BufferedImage image = null;
+	public String getSquareImage(Square square) {
 		if (square.getState() == SquareState.COVERED) {
-			image = images.get("covered");
+			return "covered";
 		} else if (square.getState() == SquareState.FLAGGED) {
-			image = images.get("flag");
+			return "flag";
 		} else if (square.getState() == SquareState.EXPLODED) {
-			image = images.get("expbomb");
+			return "expbomb";
 		} else {
 			if (square.getType() == SquareType.BOMB) {
-				image = images.get("bomb");
+				return "bomb";
 			} else if (square.getType() == SquareType.EMPTY) {
-				image = images.get("empty");
+				return "empty";
 			} else if (square.getType() == SquareType.NUMBER) {
-				image = images.get(((Number) square).getNumber());
+				return ((Number) square).getNumber();
 			}
 		}
-		return image;
+		return null;
 	}
 }

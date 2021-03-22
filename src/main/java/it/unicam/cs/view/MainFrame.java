@@ -20,11 +20,10 @@ public class MainFrame extends JFrame {
 		super(title);
 
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		this.setSize(800, 600);
-		this.setResizable(true);
+		this.setSize(grid.getConfig().getN_COLUMNS()*32, grid.getConfig().getN_ROWS()*32);
+		this.setResizable(false);
 		this.setLocationRelativeTo(null);
 
-		grid.populate();
 		DroolsUtils.getInstance().getKSession().insert(grid);
 		DroolsUtils.getInstance().getKSession().fireAllRules();
 

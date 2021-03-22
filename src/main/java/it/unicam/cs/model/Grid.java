@@ -2,9 +2,11 @@ package it.unicam.cs.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import it.unicam.cs.enumeration.SquareState;
@@ -141,18 +143,28 @@ public class Grid {
 		return this.grid == null ? false : true; 
 	}
 	
+	private Set<Location> emptySquaresSet = new HashSet<Location>();
+	private Set<Location> tempSet = new HashSet<Location>();
 	public void uncoverEmptySquare(Location loc) {
-		Square square = getSquareAt(loc);
-		square.setState(SquareState.UNCOVERED);
+		emptySquaresSet.add(loc);
 
-		getNeighboursAsStream(loc).filter(s -> s.getState() == SquareState.COVERED).forEach(s -> {
-			if (s.getType() == SquareType.NUMBER) {
-				uncoverSquare(s.getLocation());
-			}
-			if (s.getType() == SquareType.EMPTY) {
-				uncoverEmptySquare(s.getLocation());
-			}
-		});
+		while (!emptySquaresSet.isEmpty() || !tempSet.isEmpty()) {
+			emptySquaresSet.addAll(tempSet);
+			tempSet.clear();
+			emptySquaresSet.forEach(l -> getSquareAt(l).setState(SquareState.UNCOVERED));
+			emptySquaresSet.forEach(l -> {
+				System.out.println(l);
+				getNeighboursAsStream(l).filter(s -> s.getState() == SquareState.COVERED).forEach(s -> {
+					if (s.getType() == SquareType.NUMBER) {
+						uncoverSquare(s.getLocation());
+					}
+					if (s.getType() == SquareType.EMPTY) {
+						tempSet.add(s.getLocation());
+					}
+				});
+			});
+			emptySquaresSet.clear();
+		}
 	}
 	
 	public UncoverResult uncoverBombSquare(Location location) {
@@ -270,7 +282,7 @@ public class Grid {
 		String s = "";
 		for (int r = 0; r < config.getN_ROWS(); r++) {
 			for (int c = 0; c < config.getN_COLUMNS(); c++) {
-				s += getSquareAt(new Location(r, c));
+				s += grid == null ? "[           ]" : getSquareAt(new Location(r, c));
 			}
 			s += "\r\n";
 		}
