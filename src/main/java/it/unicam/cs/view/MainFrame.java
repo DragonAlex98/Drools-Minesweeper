@@ -23,24 +23,44 @@ public class MainFrame extends JFrame {
 
 		MainPanel panel = new MainPanel(grid);
 		panel.addMouseListener(new MouseAdapter() {
+			private boolean mousePressed = false;
+			private Location squareLocation = null;
+			
 			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (SwingUtilities.isLeftMouseButton(e)) {
-					Location location = panel.getSquareLocation(e.getPoint());
-					if (e.getClickCount() == 1) {
-						controller.uncoverSquare(location);						
-					} else if (e.getClickCount() == 2) {
-						controller.chordSquare(location);
+			public void mousePressed(MouseEvent e) {
+				if (SwingUtilities.isLeftMouseButton(e) || SwingUtilities.isRightMouseButton(e)) {
+					mousePressed = true;
+					squareLocation = panel.getSquareLocation(e.getPoint());
+				}
+			}
+			
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				if (!mousePressed) {
+					return;
+				}
+				if (SwingUtilities.isLeftMouseButton(e) || SwingUtilities.isRightMouseButton(e)) {
+					if (panel.getSquareLocation(e.getPoint()).equals(squareLocation)) {
+						if (SwingUtilities.isLeftMouseButton(e)) {
+							Location location = panel.getSquareLocation(e.getPoint());
+							if (e.getClickCount() == 1) {
+								controller.uncoverSquare(location);						
+							} else if (e.getClickCount() == 2) {
+								controller.chordSquare(location);
+							}
+							panel.repaint();
+							System.out.println(grid);
+						}
+						if (SwingUtilities.isRightMouseButton(e)) {
+							Location location = panel.getSquareLocation(e.getPoint());
+							controller.flagSquare(location);
+							panel.repaint();
+							System.out.println(grid);
+						}
 					}
-					panel.repaint();
-					System.out.println(grid);
 				}
-				if (SwingUtilities.isRightMouseButton(e)) {
-					Location location = panel.getSquareLocation(e.getPoint());
-					controller.flagSquare(location);
-					panel.repaint();
-					System.out.println(grid);
-				}
+				mousePressed = false;
+				squareLocation = null;
 			}
 		});
 		

@@ -1,7 +1,5 @@
 package it.unicam.cs.view;
 
-import javax.swing.SwingUtilities;
-
 import it.unicam.cs.controller.GridController;
 import it.unicam.cs.model.Configuration;
 import it.unicam.cs.model.Grid;
@@ -15,12 +13,6 @@ public class App {
 		System.out.println(grid);
 		GridController controller = new GridController(grid);
 
-		SwingUtilities.invokeLater(new Runnable() {
-			
-			@Override
-			public void run() {
-				new MainFrame("Minesweeper", grid, controller);
-			}
-		});
+		new MainFrame("Minesweeper", grid, controller);
 	}
 }
