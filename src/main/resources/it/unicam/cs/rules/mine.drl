@@ -9,6 +9,7 @@ import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.model.Location;
 import it.unicam.cs.model.MinesweeperEvent;
 import it.unicam.cs.enumeration.MinesweeperEventAction;
+import java.util.ArrayList;
 
 
 //declare any global variables here
@@ -34,13 +35,38 @@ rule "Populate Grid"
 		$grid.populate();
 		System.out.println($grid);
 end
-
+/*
 rule "Print Location"
 
 	when
 		$loc : Location( )
 	then
 		System.out.println("Row: " + $loc.getRow() + " Column: " + $loc.getColumn());
+
+end
+*/
+rule "Print all Locations"
+    when
+        $loc : ArrayList( )
+        	   from collect( Location( ) )
+    then
+        System.out.println($loc);
+end
+
+rule "Print all Events"
+    when
+        $event : ArrayList( )
+        	   from collect( MinesweeperEvent( ) )
+    then
+        System.out.println($event);
+end
+
+rule "Print Event Location"
+
+	when
+		$event : MinesweeperEvent( )
+	then
+		System.out.println("Row: " + $event.getLocation().getRow() + " Column: " + $event.getLocation().getColumn());
 
 end
 

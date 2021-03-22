@@ -2,11 +2,14 @@ package it.unicam.cs.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
 
+import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.enumeration.SquareType;
+import it.unicam.cs.enumeration.UncoverResult;
 import lombok.Getter;
 
 /**
@@ -136,6 +139,130 @@ public class Grid {
 	
 	public boolean isPopulated() {
 		return this.grid == null ? false : true; 
+	}
+	
+	public void uncoverEmptySquare(Location loc) {
+		Square square = getSquareAt(loc);
+		square.setState(SquareState.UNCOVERED);
+
+		getNeighboursAsStream(loc).filter(s -> s.getState() == SquareState.COVERED).forEach(s -> {
+			if (s.getType() == SquareType.NUMBER) {
+				uncoverSquare(s.getLocation());
+			}
+			if (s.getType() == SquareType.EMPTY) {
+				uncoverEmptySquare(s.getLocation());
+			}
+		});
+	}
+	
+	public UncoverResult uncoverBombSquare(Location location) {
+		Square square = getSquareAt(location);
+		square.setState(SquareState.EXPLODED);
+		getGridAsStream().filter(s -> s.getType() == SquareType.BOMB && s.getState() == SquareState.COVERED)
+				.forEach(s -> s.setState(SquareState.UNCOVERED));
+		return UncoverResult.BOMB;
+	}
+	
+	public UncoverResult uncoverNumberSquare(Location location) {
+		Square square = getSquareAt(location);
+		square.setState(SquareState.UNCOVERED);
+		return UncoverResult.SAFE;
+	}
+	
+	/**
+	 * Method used to uncover a square placed in a certain location.
+	 * 
+	 * @param location The location to uncover.
+	 * @return The result of the uncovery.
+	 */
+	public UncoverResult uncoverSquare(Location location) {
+		Square square = getSquareAt(location);
+		if (square.getState() != SquareState.COVERED) {
+			return UncoverResult.NO_ACTION;
+		}
+
+		if (square.getType() == SquareType.BOMB) {
+			square.setState(SquareState.EXPLODED);
+			getGridAsStream().filter(s -> s.getType() == SquareType.BOMB && s.getState() == SquareState.COVERED)
+					.forEach(s -> s.setState(SquareState.UNCOVERED));
+			return UncoverResult.BOMB;
+		}
+
+		if (square.getType() == SquareType.NUMBER) {
+			square.setState(SquareState.UNCOVERED);
+			return UncoverResult.SAFE;
+		}
+
+		uncoverEmptySquare(square.getLocation());
+		return UncoverResult.SAFE;
+	}
+	
+	/**
+	 * Method used to flag/unflag a square placed in a certain location
+	 * 
+	 * @param location The location to flag/unflag.
+	 */
+	public void flagUnflagSquare(Location location) {
+		Square square = getSquareAt(location);
+		if (square.getState() == SquareState.COVERED) {
+			square.setState(SquareState.FLAGGED);
+		} else if (square.getState() == SquareState.FLAGGED) {
+			square.setState(SquareState.COVERED);
+		}
+	}
+	
+	/**
+	 * Method used to flag/unflag a square placed in a certain location
+	 * 
+	 * @param location The location to flag/unflag.
+	 */
+	public void flagSquare(Location location) {
+		Square square = getSquareAt(location);
+		square.setState(SquareState.FLAGGED);
+	}
+	
+	/**
+	 * Method used to flag/unflag a square placed in a certain location
+	 * 
+	 * @param location The location to flag/unflag.
+	 */
+	public void unflagSquare(Location location) {
+		Square square = getSquareAt(location);
+		square.setState(SquareState.COVERED);
+	}
+	
+	/**
+	 * Method to uncover the neighbors of an Uncovered Number Square placed in a
+	 * certain location if it has a number of flags (in its neighbors) equals to its
+	 * number.
+	 * 
+	 * @param location The location for which the chord action is required.
+	 * @return The result of the chord.
+	 */
+	public UncoverResult chordSquare(Location location) {
+		Square square = getSquareAt(location);
+		if (square.getState() != SquareState.UNCOVERED || square.getType() != SquareType.NUMBER) {
+			return UncoverResult.NO_ACTION;
+		}
+
+		Number numberSquare = (Number) square;
+		if (numberSquare.getNeighbourBombsCount() != getNeighboursAsStream(location)
+				.filter(s -> s.getState() == SquareState.FLAGGED).count()) {
+			return UncoverResult.NO_ACTION;
+		}
+
+		Iterator<Square> iterator = getNeighboursAsStream(location).iterator();
+		while (iterator.hasNext()) {
+			Square currentSquare = iterator.next();
+			if (currentSquare.getState() != SquareState.COVERED) {
+				continue;
+			}
+			UncoverResult result = uncoverSquare(currentSquare.getLocation());
+			if (result == UncoverResult.BOMB) {
+				return UncoverResult.BOMB;
+			}
+		}
+		return UncoverResult.SAFE;
 	}
 
 	@Override
