@@ -68,35 +68,37 @@ public class MainFrame extends JFrame {
 				mousePressed = false;
 				squareLocation = null;
 			}
-			/*@Override
-			public void mouseReleased(MouseEvent e) {
-				if (!mousePressed) {
-					return;
-				}
-				if (SwingUtilities.isLeftMouseButton(e) || SwingUtilities.isRightMouseButton(e)) {
-					if (panel.getSquareLocation(e.getPoint()).equals(squareLocation)) {
-						if (SwingUtilities.isLeftMouseButton(e)) {
-							Location location = panel.getSquareLocation(e.getPoint());
-							if (e.getClickCount() == 1) {
-								controller.uncoverSquare(location);						
-							} else if (e.getClickCount() == 2) {
-								controller.chordSquare(location);
-							}
-							panel.repaint();
-							System.out.println(grid);
+		});
+		
+
+		/*@Override
+		public void mouseReleased(MouseEvent e) {
+			if (!mousePressed) {
+				return;
+			}
+			if (SwingUtilities.isLeftMouseButton(e) || SwingUtilities.isRightMouseButton(e)) {
+				if (panel.getSquareLocation(e.getPoint()).equals(squareLocation)) {
+					if (SwingUtilities.isLeftMouseButton(e)) {
+						Location location = panel.getSquareLocation(e.getPoint());
+						if (e.getClickCount() == 1) {
+							controller.uncoverSquare(location);						
+						} else if (e.getClickCount() == 2) {
+							controller.chordSquare(location);
 						}
-						if (SwingUtilities.isRightMouseButton(e)) {
-							Location location = panel.getSquareLocation(e.getPoint());
-							controller.flagSquare(location);
-							panel.repaint();
-							System.out.println(grid);
-						}
+						panel.repaint();
+						System.out.println(grid);
+					}
+					if (SwingUtilities.isRightMouseButton(e)) {
+						Location location = panel.getSquareLocation(e.getPoint());
+						controller.flagSquare(location);
+						panel.repaint();
+						System.out.println(grid);
 					}
 				}
-				mousePressed = false;
-				squareLocation = null;
-			}*/
-		});
+			}
+			mousePressed = false;
+			squareLocation = null;
+		}*/
 		this.getContentPane().add(panel, null);
 		this.setVisible(true);
 	}

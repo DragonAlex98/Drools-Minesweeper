@@ -11,6 +11,10 @@ import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.enumeration.SquareType;
 import it.unicam.cs.view.MainPanel;
 
+/**
+ * Singleton class used to load the images representing the different Squares.
+ *
+ */
 public class SquareImages {
 	private static SquareImages instance = null;
 
@@ -20,8 +24,7 @@ public class SquareImages {
 		this.images = new HashMap<String, BufferedImage>();
 		try {
 			this.images.put("bomb", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/bomb.png")));
-			this.images.put("covered",
-					ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/newcovered.png")));
+			this.images.put("covered", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/newcovered.png")));
 			this.images.put("empty", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/newempty.png")));
 			this.images.put("flag", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/flag.png")));
 			this.images.put("expbomb", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/expbomb.png")));
@@ -34,7 +37,6 @@ public class SquareImages {
 			this.images.put("7", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/number7.png")));
 			this.images.put("8", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/number8.png")));
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -43,13 +45,17 @@ public class SquareImages {
 		if (instance == null) {
 			instance = new SquareImages();
 		}
-
 		return instance;
 	}
 
+	/**
+	 * Method to return the corresponding Image associated to the given Square.
+	 * 
+	 * @param square The Square to associate the Image with.
+	 * @return The Image associated to the given Square.
+	 */
 	public BufferedImage getSquareImage(Square square) {
 		BufferedImage image = null;
-
 		if (square.getState() == SquareState.COVERED) {
 			image = images.get("covered");
 		} else if (square.getState() == SquareState.FLAGGED) {
@@ -62,35 +68,9 @@ public class SquareImages {
 			} else if (square.getType() == SquareType.EMPTY) {
 				image = images.get("empty");
 			} else if (square.getType() == SquareType.NUMBER) {
-				switch (((Number) square).getNeighbourBombsCount()) {
-				case 1:
-					image = images.get("1");
-					break;
-				case 2:
-					image = images.get("2");
-					break;
-				case 3:
-					image = images.get("3");
-					break;
-				case 4:
-					image = images.get("4");
-					break;
-				case 5:
-					image = images.get("5");
-					break;
-				case 6:
-					image = images.get("6");
-					break;
-				case 7:
-					image = images.get("7");
-					break;
-				case 8:
-					image = images.get("8");
-					break;
-				}
+				image = images.get(((Number) square).getNumber());
 			}
 		}
-
 		return image;
 	}
 }
