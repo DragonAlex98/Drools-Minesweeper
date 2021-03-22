@@ -7,25 +7,10 @@ import it.unicam.cs.model.Square;
 import it.unicam.cs.enumeration.SquareType;
 import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.model.Location;
-import it.unicam.cs.model.MinesweeperEvent;
-import it.unicam.cs.enumeration.MinesweeperEventAction;
 import java.util.ArrayList;
 
 
 //declare any global variables here
-
-
-
-
-rule "Your First Rule"
-
-    when
-        Grid( )
-    then
-        //actions
-        System.out.println("Grid Created!");
-
-end
 
 rule "Populate Grid"
 
@@ -35,17 +20,9 @@ rule "Populate Grid"
 		$grid.populate();
 		System.out.println($grid);
 end
-/*
-rule "Print Location"
 
-	when
-		$loc : Location( )
-	then
-		System.out.println("Row: " + $loc.getRow() + " Column: " + $loc.getColumn());
-
-end
-*/
 rule "Print all Locations"
+	agenda-group "debug"
     when
         $loc : ArrayList( )
         	   from collect( Location( ) )
@@ -53,101 +30,61 @@ rule "Print all Locations"
         System.out.println($loc);
 end
 
-rule "Print all Events"
-    when
-        $event : ArrayList( )
-        	   from collect( MinesweeperEvent( ) )
-    then
-        System.out.println($event);
-end
-
 rule "Print Event Location"
-
+	agenda-group "debug"
 	when
-		$event : MinesweeperEvent( )
+		$loc : Location( )
 	then
-		System.out.println("Row: " + $event.getLocation().getRow() + " Column: " + $event.getLocation().getColumn());
+		System.out.println("Row: " + $loc.getRow() + " Column: " + $loc.getColumn());
 
 end
-
 
 rule "empty square"
-
+	agenda-group "UNCOVER"
 	when
-		$event : MinesweeperEvent(ACTION == MinesweeperEventAction.UNCOVER)
-		$grid : Grid(getSquareAt($event.getLocation()).getType() == SquareType.EMPTY && getSquareAt($event.getLocation()).getState() == SquareState.COVERED)
+		$loc : Location( )
+		$grid : Grid(getSquareAt($loc).getType() == SquareType.EMPTY && getSquareAt($loc).getState() == SquareState.COVERED)
 	then
 		System.out.println("Empty Square Rule Fired!");
-		$grid.uncoverEmptySquare($event.getLocation());
+		$grid.uncoverEmptySquare($loc);
 end
 
 rule "bomb square"
-
+	agenda-group "UNCOVER"
 	when
-		$event : MinesweeperEvent(ACTION == MinesweeperEventAction.UNCOVER)
-		$grid : Grid(getSquareAt($event.getLocation()).getType() == SquareType.BOMB && getSquareAt($event.getLocation()).getState() == SquareState.COVERED)
+		$loc : Location( )
+		$grid : Grid(getSquareAt($loc).getType() == SquareType.BOMB && getSquareAt($loc).getState() == SquareState.COVERED)
 	then
 		System.out.println("Bomb Square Rule Fired!");
-		$grid.uncoverBombSquare($event.getLocation());
+		$grid.uncoverBombSquare($loc);
 end
 
 rule "number square"
-
+	agenda-group "UNCOVER"
 	when
-		$event : MinesweeperEvent(ACTION == MinesweeperEventAction.UNCOVER)
-		$grid : Grid(getSquareAt($event.getLocation()).getType() == SquareType.NUMBER && getSquareAt($event.getLocation()).getState() == SquareState.COVERED)
+		$loc : Location( )
+		$grid : Grid(getSquareAt($loc).getType() == SquareType.NUMBER && getSquareAt($loc).getState() == SquareState.COVERED)
 	then
 		System.out.println("Number Square Rule Fired!");
-		$grid.uncoverNumberSquare($event.getLocation());
+		$grid.uncoverNumberSquare($loc);
 end
 
 rule "flag/unflag square"
-
+	agenda-group "FLAG"
 	when
-		$event : MinesweeperEvent(ACTION == MinesweeperEventAction.FLAG)
-		$grid : Grid(getSquareAt($event.getLocation()).getState() == SquareState.COVERED || getSquareAt($event.getLocation()).getState() == SquareState.FLAGGED)
+		$loc : Location( )
+		$grid : Grid(getSquareAt($loc).getState() == SquareState.COVERED || getSquareAt($loc).getState() == SquareState.FLAGGED)
 	then
 		System.out.println("Flag/Unflag Square Rule Fired!");
-		$grid.flagUnflagSquare($event.getLocation());
+		$grid.flagUnflagSquare($loc);
 end
 
 rule "chord square"
-
+	agenda-group "CHORD"
 	when
-		$event : MinesweeperEvent(ACTION == MinesweeperEventAction.CHORD)
-		$grid : Grid(getSquareAt($event.getLocation()).getType() == SquareType.NUMBER && getSquareAt($event.getLocation()).getState() == SquareState.UNCOVERED)
+		$loc : Location( )
+		$grid : Grid(getSquareAt($loc).getType() == SquareType.NUMBER && getSquareAt($loc).getState() == SquareState.UNCOVERED)
 	then
 		System.out.println("Chord Square Rule Fired!");
-		$grid.chordSquare($event.getLocation());
-end
-
-/*
-rule "flag square"
-
-	when
-		$event : MinesweeperEvent(ACTION == MinesweeperEventAction.FLAG)
-		$grid : Grid(getSquareAt($event.getLocation()).getState() == SquareState.COVERED)
-	then
-		System.out.println("Flag Square Rule Fired!");
-		$grid.flagSquare($event.getLocation());
-end
-
-rule "unflag square"
-
-	when
-		$event : MinesweeperEvent(ACTION == MinesweeperEventAction.FLAG)
-		$grid : Grid(getSquareAt($event.getLocation()).getState() == SquareState.FLAGGED)
-	then
-		System.out.println("Unflag Square Rule Fired!");
-		$grid.unflagSquare($event.getLocation());
-end
-*/
-
-rule "Your Second Rule"
-    //include attributes such as "salience" here...
-    when
-        //conditions
-    then
-        //actions
-
+		$grid.chordSquare($loc);
 end

@@ -33,7 +33,6 @@ public class DroolsUtils {
 			this.ks = KieServices.Factory.get();
 			this.kContainer = ks.getKieClasspathContainer();
 			this.kSession = kContainer.newKieSession("ksession-rules");
-	        //this.kSession.getEnvironment().set("org.jbpm.rule.task.waitstate", "true");
 			
 			if (this.config == null)
 				this.config = new Configuration(9, 9, 10);

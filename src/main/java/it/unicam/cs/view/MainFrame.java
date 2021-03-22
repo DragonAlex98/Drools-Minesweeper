@@ -10,10 +10,8 @@ import org.kie.api.runtime.rule.FactHandle;
 
 import it.unicam.cs.controller.DroolsUtils;
 import it.unicam.cs.controller.GridController;
-import it.unicam.cs.enumeration.MinesweeperEventAction;
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
-import it.unicam.cs.model.MinesweeperEvent;
 
 public class MainFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -46,18 +44,17 @@ public class MainFrame extends JFrame {
 				}
 				if (SwingUtilities.isLeftMouseButton(e) || SwingUtilities.isRightMouseButton(e)) {
 					if (panel.getSquareLocation(e.getPoint()).equals(squareLocation)) {
-						MinesweeperEvent mEvent = null;
 						if (SwingUtilities.isLeftMouseButton(e)) {
 							if (e.getClickCount() == 1) {
-								mEvent = new MinesweeperEvent(MinesweeperEventAction.UNCOVER, squareLocation);
+								DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "UNCOVER" ).setFocus();
 							} else if (e.getClickCount() == 2) {
-								mEvent = new MinesweeperEvent(MinesweeperEventAction.CHORD, squareLocation);
+								DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "CHORD" ).setFocus();
 							}
 						}
 						if (SwingUtilities.isRightMouseButton(e)) {
-							mEvent = new MinesweeperEvent(MinesweeperEventAction.FLAG, squareLocation);
+							DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "FLAG" ).setFocus();
 						}
-						FactHandle fH = DroolsUtils.getInstance().getKSession().insert(mEvent);
+						FactHandle fH = DroolsUtils.getInstance().getKSession().insert(squareLocation);
 						DroolsUtils.getInstance().getKSession().fireAllRules();
 						DroolsUtils.getInstance().getKSession().delete(fH);
 						DroolsUtils.getInstance().getKSession().fireAllRules();
