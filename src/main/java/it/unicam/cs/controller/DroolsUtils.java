@@ -1,19 +1,17 @@
 package it.unicam.cs.controller;
 
 import org.kie.api.KieServices;
+import org.kie.api.event.rule.ObjectDeletedEvent;
+import org.kie.api.event.rule.ObjectInsertedEvent;
+import org.kie.api.event.rule.ObjectUpdatedEvent;
+import org.kie.api.event.rule.RuleRuntimeEventListener;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 
-import it.unicam.cs.model.Configuration;
-import it.unicam.cs.model.Grid;
 import lombok.Getter;
-import lombok.Setter;
 
 public class DroolsUtils {
 	private static DroolsUtils instance = null;
-	
-	@Getter
-	private Grid grid;
 	
 	@Getter
 	private KieServices ks;
@@ -24,34 +22,34 @@ public class DroolsUtils {
 	@Getter
 	private KieSession kSession;
 	
-	@Setter
-	@Getter
-	private Configuration config;
-	
 	private DroolsUtils() {
 		try {
 			this.ks = KieServices.Factory.get();
 			this.kContainer = ks.getKieClasspathContainer();
 			this.kSession = kContainer.newKieSession("ksession-rules");
-	        //this.kSession.getEnvironment().set("org.jbpm.rule.task.waitstate", "true");
-			
-			if (this.config == null)
-				this.config = new Configuration(9, 9, 10);
-			
-			this.grid = new Grid(this.config);
-			
-			kSession.insert(grid);
-			kSession.fireAllRules();
+			this.kSession.addEventListener(new RuleRuntimeEventListener() {
+
+				public void objectUpdated(ObjectUpdatedEvent arg0) {
+					System.out.println("*****Object Updated*****\n" +arg0.getObject().toString());
+				}
+
+				public void objectInserted(ObjectInsertedEvent arg0) {
+					System.out.println("*****Object inserted***** \n" + arg0.getObject().toString());
+				}
+
+				public void objectDeleted(ObjectDeletedEvent arg0) {
+					System.out.println("*****Object Retracted*****\n" + arg0.getOldObject().toString());
+				}
+			});
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static DroolsUtils getInstance() {
 		if (instance == null)
 			instance = new DroolsUtils();
 		
 		return instance;
 	}
-	
 }

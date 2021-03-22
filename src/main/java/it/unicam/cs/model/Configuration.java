@@ -16,5 +16,4 @@ public class Configuration {
 	private final int N_COLUMNS;
 	/** Number of bombs to place in the grid. **/
 	private final int N_BOMBS;
-
 }

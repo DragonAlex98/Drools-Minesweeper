@@ -26,6 +26,10 @@ public class MainFrame extends JFrame {
 		this.setResizable(true);
 		this.setLocationRelativeTo(null);
 
+		grid.populate();
+		DroolsUtils.getInstance().getKSession().insert(grid);
+		DroolsUtils.getInstance().getKSession().fireAllRules();
+
 		MainPanel panel = new MainPanel(grid);
 		panel.addMouseListener(new MouseAdapter() {
 			private boolean mousePressed = false;
