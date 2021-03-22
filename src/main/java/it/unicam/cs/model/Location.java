@@ -1,6 +1,7 @@
 package it.unicam.cs.model;
 
 import lombok.Getter;
+import lombok.ToString;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 
@@ -11,6 +12,7 @@ import lombok.EqualsAndHashCode;
 @Getter
 @EqualsAndHashCode
 @AllArgsConstructor
+@ToString
 public class Location {
 	/** The row of a Square **/
 	private int row;
