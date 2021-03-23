@@ -83,7 +83,7 @@ public class Grid {
 	 * 
 	 * @return The random Location.
 	 */
-	private Location getRandomPoint() {
+	public Location getRandomPoint() {
 		return new Location(RANDOM.nextInt(config.getN_ROWS()), RANDOM.nextInt(config.getN_COLUMNS()));
 	}
 
