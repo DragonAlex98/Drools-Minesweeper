@@ -15,6 +15,7 @@ import org.kie.api.runtime.rule.FactHandle;
 
 import it.unicam.cs.controller.DroolsUtils;
 import it.unicam.cs.controller.GridController;
+import it.unicam.cs.enumeration.Difficulty;
 import it.unicam.cs.model.Configuration;
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
@@ -26,8 +27,6 @@ public class MainFrame extends JFrame {
 	private MainPanel panel = null;
 	
 	public void createNewGameGUI(Grid grid) {
-		newGame(grid);
-
 		MainPanel panel = new MainPanel();
 		panel.init(grid);
 		panel.addMouseListener(new MouseAdapter() {
@@ -102,47 +101,26 @@ public class MainFrame extends JFrame {
 				MainFrame.this.panel.init(grid);
 			}
 		});
-        JMenuItem newBeginnerGameMenuItem = new JMenuItem("Beginner");
-        newBeginnerGameMenuItem.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Configuration configuration = new Configuration(9, 9, 10);
-				Grid grid = new Grid(configuration);
-				newGame(grid);
-				MainFrame.this.panel.init(grid);
-			}
-		});
-        JMenuItem newIntermediateGameMenuItem = new JMenuItem("Intermediate");
-        newIntermediateGameMenuItem.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Configuration configuration = new Configuration(16, 16, 40);
-				Grid grid = new Grid(configuration);
-				newGame(grid);
-				MainFrame.this.panel.init(grid);
-			}
-		});
-        JMenuItem newExpertGameMenuItem = new JMenuItem("Expert");
-        newExpertGameMenuItem.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Configuration configuration = new Configuration(16, 30, 99);
-				Grid grid = new Grid(configuration);
-				newGame(grid);
-				MainFrame.this.panel.init(grid);
-			}
-		});
-        
         gameMenu.add(newGameMenuItem);
         gameMenu.addSeparator();
-        gameMenu.add(newBeginnerGameMenuItem);
-        gameMenu.add(newIntermediateGameMenuItem);
-        gameMenu.add(newExpertGameMenuItem);
+
+        for (Difficulty difficulty : Difficulty.values()) {
+        	JMenuItem newDifficultyGameMenuItem = new JMenuItem(difficulty.toString().substring(0, 1).toUpperCase() + difficulty.toString().substring(1).toLowerCase());
+            newDifficultyGameMenuItem.addActionListener(new ActionListener() {
+
+    			@Override
+    			public void actionPerformed(ActionEvent e) {
+    				Configuration configuration = difficulty.getConfiguration();
+    				Grid grid = new Grid(configuration);
+    				newGame(grid);
+    				MainFrame.this.panel.init(grid);
+    			}
+    		});
+            gameMenu.add(newDifficultyGameMenuItem);
+        }
+
         menuBar.add(gameMenu);
-        
+
         JMenu solverMenu = new JMenu("Solver");
         JMenuItem solveMenuItem = new JMenuItem("Solve");
         solveMenuItem.addActionListener(new ActionListener() {
@@ -157,7 +135,8 @@ public class MainFrame extends JFrame {
         menuBar.add(solverMenu);
         
         this.setJMenuBar(menuBar);
-        
+
+        newGame(grid);
         createNewGameGUI(grid);
 
 		this.getContentPane().add(this.panel, null);
