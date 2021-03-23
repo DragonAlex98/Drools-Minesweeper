@@ -22,25 +22,29 @@ public class DroolsUtils {
 	@Getter
 	private KieSession kSession;
 	
+	private void createNewSession() {
+		this.kSession = kContainer.newKieSession("ksession-rules");
+		this.kSession.addEventListener(new RuleRuntimeEventListener() {
+
+			public void objectUpdated(ObjectUpdatedEvent arg0) {
+				System.out.println("*****Object Updated*****\n" +arg0.getObject().toString());
+			}
+
+			public void objectInserted(ObjectInsertedEvent arg0) {
+				System.out.println("*****Object inserted***** \n" + arg0.getObject().toString());
+			}
+
+			public void objectDeleted(ObjectDeletedEvent arg0) {
+				System.out.println("*****Object Retracted*****\n" + arg0.getOldObject().toString());
+			}
+		});
+	}
+	
 	private DroolsUtils() {
 		try {
 			this.ks = KieServices.Factory.get();
 			this.kContainer = ks.getKieClasspathContainer();
-			this.kSession = kContainer.newKieSession("ksession-rules");
-			this.kSession.addEventListener(new RuleRuntimeEventListener() {
-
-				public void objectUpdated(ObjectUpdatedEvent arg0) {
-					System.out.println("*****Object Updated*****\n" +arg0.getObject().toString());
-				}
-
-				public void objectInserted(ObjectInsertedEvent arg0) {
-					System.out.println("*****Object inserted***** \n" + arg0.getObject().toString());
-				}
-
-				public void objectDeleted(ObjectDeletedEvent arg0) {
-					System.out.println("*****Object Retracted*****\n" + arg0.getOldObject().toString());
-				}
-			});
+			this.createNewSession();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -51,5 +55,10 @@ public class DroolsUtils {
 			instance = new DroolsUtils();
 		
 		return instance;
+	}
+	
+	public void clear() {
+		this.kSession.dispose();
+		this.createNewSession();
 	}
 }

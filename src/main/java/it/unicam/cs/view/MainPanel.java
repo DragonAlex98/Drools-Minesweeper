@@ -29,12 +29,17 @@ public class MainPanel extends JPanel {
 
 	private Map<String, Image> images = new HashMap<String, Image>();
 
-	public MainPanel(Grid grid) {
+	public MainPanel() {}
+	
+	public void init(Grid grid) {
 		this.grid = grid;
 		addComponentListener(new ComponentAdapter() {
 
 			@Override
 			public void componentResized(ComponentEvent e) {
+				if (grid == null) {
+					return;
+				}
 				float internalSquareWidth = (float)getWidth() / grid.getConfig().getN_COLUMNS();
 				float internalSquareHeight = (float)getHeight() / grid.getConfig().getN_ROWS();
 				images.clear();
@@ -44,16 +49,26 @@ public class MainPanel extends JPanel {
 				});
 				squareWidth = internalSquareWidth;
 				squareHeight = internalSquareHeight;
+				revalidate();
+				repaint();
 			}
-		});		
+		});
+		revalidate();
+		repaint();
 	}
 	
 	public Location getSquareLocation(Point point) {
+		if (grid == null) {
+			return new Location(-1, -1);
+		}
 		return new Location((int) (point.y / squareHeight), (int) (point.x / squareWidth));
 	}
 	
 	@Override
 	public void paintComponent(Graphics g) {
+		if (grid == null || !grid.isPopulated()) {
+			return;
+		}
 		if (squareWidth == 0.0f || squareHeight == 0.0f) {
 			return;
 		}
