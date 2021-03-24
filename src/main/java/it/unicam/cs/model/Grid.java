@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import it.unicam.cs.enumeration.GameState;
 import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.enumeration.SquareType;
 import it.unicam.cs.enumeration.UncoverResult;
@@ -25,9 +26,12 @@ public class Grid {
 	@Getter
 	private Configuration config;
 	private final Random RANDOM = new Random();
+	@Getter
+	private GameState state;
 
 	public Grid(Configuration config) {
 		this.config = config;
+		this.state = GameState.ONGOING;
 	}
 
 	/**
@@ -138,13 +142,14 @@ public class Grid {
 			}
 		}
 	}
-	
+
 	public boolean isPopulated() {
-		return this.grid == null ? false : true; 
+		return this.grid == null ? false : true;
 	}
-	
+
 	private Set<Location> emptySquaresSet = new HashSet<Location>();
 	private Set<Location> tempSet = new HashSet<Location>();
+
 	public void uncoverEmptySquare(Location loc) {
 		emptySquaresSet.add(loc);
 
@@ -166,21 +171,36 @@ public class Grid {
 			emptySquaresSet.clear();
 		}
 	}
-	
+
+	public UncoverResult newUncoverEmpty(Location location) {
+		Square square = getSquareAt(location);
+		square.setState(SquareState.UNCOVERED);
+		if (this.config.getN_ROWS() * this.config.getN_COLUMNS() - this.config.getN_BOMBS() == getGridAsStream()
+				.filter(s -> s.getState() == SquareState.UNCOVERED).count()) {
+			this.state = GameState.WIN;
+		}
+		return UncoverResult.SAFE;
+	}
+
 	public UncoverResult uncoverBombSquare(Location location) {
 		Square square = getSquareAt(location);
 		square.setState(SquareState.EXPLODED);
 		getGridAsStream().filter(s -> s.getType() == SquareType.BOMB && s.getState() == SquareState.COVERED)
 				.forEach(s -> s.setState(SquareState.UNCOVERED));
+		this.state = GameState.LOSS;
 		return UncoverResult.BOMB;
 	}
-	
+
 	public UncoverResult uncoverNumberSquare(Location location) {
 		Square square = getSquareAt(location);
 		square.setState(SquareState.UNCOVERED);
+		if (this.config.getN_ROWS() * this.config.getN_COLUMNS() - this.config.getN_BOMBS() == getGridAsStream()
+				.filter(s -> s.getState() == SquareState.UNCOVERED).count()) {
+			this.state = GameState.WIN;
+		}
 		return UncoverResult.SAFE;
 	}
-	
+
 	/**
 	 * Method used to uncover a square placed in a certain location.
 	 * 
@@ -197,6 +217,7 @@ public class Grid {
 			square.setState(SquareState.EXPLODED);
 			getGridAsStream().filter(s -> s.getType() == SquareType.BOMB && s.getState() == SquareState.COVERED)
 					.forEach(s -> s.setState(SquareState.UNCOVERED));
+			this.state = GameState.LOSS;
 			return UncoverResult.BOMB;
 		}
 
@@ -208,7 +229,7 @@ public class Grid {
 		uncoverEmptySquare(square.getLocation());
 		return UncoverResult.SAFE;
 	}
-	
+
 	/**
 	 * Method used to flag/unflag a square placed in a certain location
 	 * 
@@ -222,7 +243,7 @@ public class Grid {
 			square.setState(SquareState.COVERED);
 		}
 	}
-	
+
 	/**
 	 * Method used to flag/unflag a square placed in a certain location
 	 * 
@@ -232,7 +253,7 @@ public class Grid {
 		Square square = getSquareAt(location);
 		square.setState(SquareState.FLAGGED);
 	}
-	
+
 	/**
 	 * Method used to flag/unflag a square placed in a certain location
 	 * 
@@ -242,7 +263,7 @@ public class Grid {
 		Square square = getSquareAt(location);
 		square.setState(SquareState.COVERED);
 	}
-	
+
 	/**
 	 * Method to uncover the neighbors of an Uncovered Number Square placed in a
 	 * certain location if it has a number of flags (in its neighbors) equals to its

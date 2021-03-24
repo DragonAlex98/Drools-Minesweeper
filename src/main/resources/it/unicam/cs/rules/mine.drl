@@ -7,6 +7,7 @@ import it.unicam.cs.model.Square;
 import it.unicam.cs.enumeration.SquareType;
 import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.model.Location;
+import it.unicam.cs.enumeration.GameState;
 import java.util.ArrayList;
 
 
@@ -46,17 +47,24 @@ rule "empty square"
 		$grid : Grid(getSquareAt($loc).getType() == SquareType.EMPTY && getSquareAt($loc).getState() == SquareState.COVERED)
 	then
 		System.out.println("Empty Square Rule Fired!");
-		$grid.uncoverEmptySquare($loc);
+		$grid.newUncoverEmpty($loc);
+		$grid.getNeighboursAsStream($loc).filter(s -> s.getState() == SquareState.COVERED).forEach(s -> {
+					if (s.getType() == SquareType.NUMBER || s.getType() == SquareType.EMPTY) {
+						insert(s.getLocation());
+					}
+				});
+		retract($loc);
 end
 
 rule "bomb square"
 	agenda-group "UNCOVER"
 	when
 		$loc : Location( )
-		$grid : Grid(getSquareAt($loc).getType() == SquareType.BOMB && getSquareAt($loc).getState() == SquareState.COVERED)
+		$grid : Grid(getSquareAt($loc).getType() == SquareType.BOMB && getSquareAt($loc).getState() == SquareState.COVERED && getState() == GameState.ONGOING)
 	then
 		System.out.println("Bomb Square Rule Fired!");
 		$grid.uncoverBombSquare($loc);
+		retract($loc);
 end
 
 rule "number square"
@@ -67,6 +75,7 @@ rule "number square"
 	then
 		System.out.println("Number Square Rule Fired!");
 		$grid.uncoverNumberSquare($loc);
+		retract($loc);
 end
 
 rule "flag/unflag square"

@@ -16,6 +16,7 @@ import org.kie.api.runtime.rule.FactHandle;
 import it.unicam.cs.controller.DroolsUtils;
 import it.unicam.cs.controller.GridController;
 import it.unicam.cs.enumeration.Difficulty;
+import it.unicam.cs.enumeration.GameState;
 import it.unicam.cs.model.Configuration;
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
@@ -35,6 +36,9 @@ public class MainFrame extends JFrame {
 			
 			@Override
 			public void mousePressed(MouseEvent e) {
+				if (MainFrame.this.grid.getState() != GameState.ONGOING) {
+					return;
+				}
 				if (SwingUtilities.isLeftMouseButton(e) || SwingUtilities.isRightMouseButton(e)) {
 					mousePressed = true;
 					squareLocation = panel.getSquareLocation(e.getPoint());
@@ -60,10 +64,10 @@ public class MainFrame extends JFrame {
 						}
 						FactHandle fH = DroolsUtils.getInstance().getKSession().insert(squareLocation);
 						DroolsUtils.getInstance().getKSession().fireAllRules();
-						DroolsUtils.getInstance().getKSession().delete(fH);
-						DroolsUtils.getInstance().getKSession().fireAllRules();
+						//DroolsUtils.getInstance().getKSession().delete(fH);
+						//DroolsUtils.getInstance().getKSession().fireAllRules();
 						panel.repaint();
-						System.out.println(grid);
+						System.out.println(MainFrame.this.grid);
 					}
 				}
 				mousePressed = false;
