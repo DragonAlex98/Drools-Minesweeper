@@ -3,6 +3,7 @@ package it.unicam.cs.solver;
 import java.util.Optional;
 
 import it.unicam.cs.controller.GridController;
+import it.unicam.cs.enumeration.GameState;
 import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.enumeration.SquareType;
 import it.unicam.cs.enumeration.UncoverResult;
@@ -48,7 +49,7 @@ public class Solver {
 				if (square.isPresent() && grid.uncoverSquare(square.get().getLocation()) == UncoverResult.BOMB) {
 					break;
 				} else {
-					if (grid.getConfig().getN_ROWS() * grid.getConfig().getN_COLUMNS() - grid.getConfig().getN_BOMBS() == grid.getGridAsStream().filter(s -> s.getState() == SquareState.UNCOVERED).count()) {
+					if (grid.getState() == GameState.WIN) {
 						break;
 					} else {
 						continue;
@@ -72,7 +73,7 @@ public class Solver {
 			} while(grid.getSquareAt(randomLocation).getType() == SquareType.BOMB);
 			controller.uncoverSquare(randomLocation);
 			solver.nextState();
-			if (grid.getConfig().getN_ROWS() * grid.getConfig().getN_COLUMNS() - grid.getConfig().getN_BOMBS() == grid.getGridAsStream().filter(s -> s.getState() == SquareState.UNCOVERED).count()) {
+			if (grid.getState() == GameState.WIN) {
 				win++;
 			} else {
 				lose++;

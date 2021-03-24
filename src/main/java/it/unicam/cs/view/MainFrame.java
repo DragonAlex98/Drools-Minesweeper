@@ -11,8 +11,6 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
 
-import org.kie.api.runtime.rule.FactHandle;
-
 import it.unicam.cs.controller.DroolsUtils;
 import it.unicam.cs.controller.GridController;
 import it.unicam.cs.enumeration.Difficulty;
@@ -62,10 +60,8 @@ public class MainFrame extends JFrame {
 						if (SwingUtilities.isRightMouseButton(e)) {
 							DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "FLAG" ).setFocus();
 						}
-						FactHandle fH = DroolsUtils.getInstance().getKSession().insert(squareLocation);
+						DroolsUtils.getInstance().getKSession().insert(squareLocation);
 						DroolsUtils.getInstance().getKSession().fireAllRules();
-						//DroolsUtils.getInstance().getKSession().delete(fH);
-						//DroolsUtils.getInstance().getKSession().fireAllRules();
 						panel.repaint();
 						System.out.println(MainFrame.this.grid);
 					}

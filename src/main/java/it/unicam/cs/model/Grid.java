@@ -147,6 +147,12 @@ public class Grid {
 		return this.grid == null ? false : true;
 	}
 
+	public void updateGameState() {
+		if (this.config.getN_BOMBS() == getGridAsStream().filter(s -> s.getState() == SquareState.COVERED || s.getState() == SquareState.FLAGGED).count()) {
+			this.state = GameState.WIN;
+		}
+	}
+
 	private Set<Location> emptySquaresSet = new HashSet<Location>();
 	private Set<Location> tempSet = new HashSet<Location>();
 
@@ -157,6 +163,7 @@ public class Grid {
 			emptySquaresSet.addAll(tempSet);
 			tempSet.clear();
 			emptySquaresSet.forEach(l -> getSquareAt(l).setState(SquareState.UNCOVERED));
+			updateGameState();
 			emptySquaresSet.forEach(l -> {
 				System.out.println(l);
 				getNeighboursAsStream(l).filter(s -> s.getState() == SquareState.COVERED).forEach(s -> {
@@ -175,10 +182,7 @@ public class Grid {
 	public UncoverResult newUncoverEmpty(Location location) {
 		Square square = getSquareAt(location);
 		square.setState(SquareState.UNCOVERED);
-		if (this.config.getN_ROWS() * this.config.getN_COLUMNS() - this.config.getN_BOMBS() == getGridAsStream()
-				.filter(s -> s.getState() == SquareState.UNCOVERED).count()) {
-			this.state = GameState.WIN;
-		}
+		updateGameState();
 		return UncoverResult.SAFE;
 	}
 
@@ -194,10 +198,7 @@ public class Grid {
 	public UncoverResult uncoverNumberSquare(Location location) {
 		Square square = getSquareAt(location);
 		square.setState(SquareState.UNCOVERED);
-		if (this.config.getN_ROWS() * this.config.getN_COLUMNS() - this.config.getN_BOMBS() == getGridAsStream()
-				.filter(s -> s.getState() == SquareState.UNCOVERED).count()) {
-			this.state = GameState.WIN;
-		}
+		updateGameState();
 		return UncoverResult.SAFE;
 	}
 
@@ -222,7 +223,7 @@ public class Grid {
 		}
 
 		if (square.getType() == SquareType.NUMBER) {
-			square.setState(SquareState.UNCOVERED);
+			uncoverNumberSquare(square.getLocation());
 			return UncoverResult.SAFE;
 		}
 
@@ -307,6 +308,7 @@ public class Grid {
 			}
 			s += "\r\n";
 		}
+		s += "State: " + state + "\r\n";
 		return s;
 	}
 }
