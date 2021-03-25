@@ -1,0 +1,148 @@
+//created on: 20 mar 2021
+package test
+
+//list any import classes here.
+import it.unicam.cs.model.Grid;
+import it.unicam.cs.model.Square;
+import it.unicam.cs.model.Number;
+import it.unicam.cs.model.Neighbor;
+import it.unicam.cs.enumeration.SquareType;
+import it.unicam.cs.enumeration.SquareState;
+import it.unicam.cs.model.Location;
+import it.unicam.cs.enumeration.GameState;
+import java.util.ArrayList;
+
+
+//declare any global variables here
+
+/*
+rule "Print all Locations"
+	agenda-group "debug"
+    when
+        $loc : ArrayList( )
+        	   from collect( Location( ) )
+    then
+        System.out.println($loc);
+end
+
+rule "Print Event Location"
+	agenda-group "debug"
+	when
+		$loc : Location( )
+	then
+		System.out.println("Row: " + $loc.getRow() + " Column: " + $loc.getColumn());
+end
+*/
+
+rule "Populate"
+
+	when
+		$grid : Grid(isPopulated() == false)
+	then
+		$grid.populate();
+		System.out.println($grid);
+end
+
+rule "register north east"
+    agenda-group "register neighbor"
+when
+    $square: Square( $location : location )
+    $northEast : Square( location.getRow()  == ($location.getRow() - 1), location.getColumn() == ( $location.getColumn() + 1 ) )
+then
+    insert( new Neighbor( $square, $northEast ) );
+    insert( new Neighbor( $northEast, $square ) );
+end
+
+rule "register north"
+    agenda-group "register neighbor"
+when
+    $square: Square( $location : location )
+    $north : Square( location.getRow()  == ($location.getRow() - 1), location.getColumn() == $location.getColumn() )
+then
+    insert( new Neighbor( $square, $north ) );
+    insert( new Neighbor( $north, $square ) );
+end
+
+rule "register north west"
+    agenda-group "register neighbor"
+when
+    $square: Square( $location : location )
+    $northWest : Square( location.getRow()  == ($location.getRow() - 1), location.getColumn() == ( $location.getColumn() - 1 ) )
+then
+    insert( new Neighbor( $square, $northWest ) );
+    insert( new Neighbor( $northWest, $square ) );
+end
+
+rule "register west"
+    agenda-group "register neighbor"
+when
+    $square: Square( $location : location )
+    $west : Square( location.getRow()  == $location.getRow(), location.getColumn() == ( $location.getColumn() - 1 ) )
+then
+    insert( new Neighbor( $square, $west ) );
+    insert( new Neighbor( $west, $square ) );
+end
+
+rule "Uncover Empty"
+    agenda-group "UNCOVER"
+	when
+    	$loc: Location( )
+    	$theSquare: Square(location == $loc, type == SquareType.EMPTY, state == SquareState.COVERED)
+    	Neighbor(square == $theSquare, $neighbor: neighbor)
+	then
+		System.out.println("Empty Square Rule Fired!");
+    	modify ($theSquare) {setState(SquareState.UNCOVERED)}
+    	insert( $neighbor.getLocation() );
+end
+
+rule "Uncover Bomb"
+	agenda-group "UNCOVER"
+	when
+		$loc : Location( )
+		$theSquare: Square(location == $loc, type == SquareType.BOMB, state == SquareState.COVERED)
+	then
+		System.out.println("Bomb Square Rule Fired!");
+		modify ($theSquare) {setState(SquareState.UNCOVERED)}
+end
+
+rule "Uncover Number"
+	agenda-group "UNCOVER"
+	when
+		$loc : Location( )
+		$theSquare: Square(location == $loc, type == SquareType.NUMBER, state == SquareState.COVERED)
+	then
+		System.out.println("Number Square Rule Fired!");
+		modify ($theSquare) {setState(SquareState.UNCOVERED)}
+end
+
+rule "Flag"
+	agenda-group "FLAG"
+	when
+		$loc : Location( )
+		$theSquare: Square(location == $loc, state == SquareState.COVERED)
+	then
+		System.out.println("Flag Square Rule Fired!");
+		modify ($theSquare) {setState(SquareState.FLAGGED)}
+end
+
+rule "Unflag"
+	agenda-group "FLAG"
+	when
+		$loc : Location( )
+		$theSquare: Square(location == $loc, state == SquareState.FLAGGED)
+	then
+		System.out.println("Unflag Square Rule Fired!");
+		modify ($theSquare) {setState(SquareState.COVERED)}
+end
+
+rule "Chord"
+	agenda-group "CHORD"
+	when
+		$loc : Location( )
+		$theSquare: Number(location == $loc, type == SquareType.NUMBER, state == SquareState.UNCOVERED)
+		//$theSquare.getNeighbourBombsCount() == accumulate ( Neighbor (square == $thesquare, neighbor.getState() == SquareState.FLAGGED); $cnt : count(1) ; $cnt > 1 )
+		Neighbor(square == $theSquare, $neighbor: neighbor)
+	then
+		System.out.println("Chord Square Rule Fired!");
+		insert( $neighbor.getLocation() );
+end
