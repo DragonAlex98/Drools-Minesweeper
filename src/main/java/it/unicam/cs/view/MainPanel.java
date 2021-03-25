@@ -30,33 +30,36 @@ public class MainPanel extends JPanel {
 	private Map<String, Image> images = new HashMap<String, Image>();
 
 	public MainPanel() {}
-	
+
+	private void updateImages() {
+		if (getWidth() == 0 || getHeight() == 0) {
+			return;
+		}
+		float internalSquareWidth = (float)getWidth() / grid.getConfig().getN_COLUMNS();
+		float internalSquareHeight = (float)getHeight() / grid.getConfig().getN_ROWS();
+		images.clear();
+		SquareImages.getInstance().getImages().forEach((k, v) -> {
+			Image coveredImageResized = v.getScaledInstance((int)internalSquareWidth, (int)internalSquareHeight, Image.SCALE_AREA_AVERAGING);					
+			MainPanel.this.images.put(k, coveredImageResized);
+		});
+		squareWidth = internalSquareWidth;
+		squareHeight = internalSquareHeight;
+	}
+
 	public void init(Grid grid) {
 		this.grid = grid;
 		addComponentListener(new ComponentAdapter() {
 
 			@Override
 			public void componentResized(ComponentEvent e) {
-				if (grid == null) {
-					return;
-				}
-				float internalSquareWidth = (float)getWidth() / grid.getConfig().getN_COLUMNS();
-				float internalSquareHeight = (float)getHeight() / grid.getConfig().getN_ROWS();
-				images.clear();
-				SquareImages.getInstance().getImages().forEach((k, v) -> {
-					Image coveredImageResized = v.getScaledInstance((int)internalSquareWidth, (int)internalSquareHeight, Image.SCALE_AREA_AVERAGING);					
-					MainPanel.this.images.put(k, coveredImageResized);
-				});
-				squareWidth = internalSquareWidth;
-				squareHeight = internalSquareHeight;
-				revalidate();
-				repaint();
+				updateImages();
 			}
 		});
+		updateImages();
 		revalidate();
 		repaint();
 	}
-	
+
 	public Location getSquareLocation(Point point) {
 		if (grid == null) {
 			return new Location(-1, -1);

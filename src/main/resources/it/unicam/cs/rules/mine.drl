@@ -37,7 +37,6 @@ rule "Print Event Location"
 		$loc : Location( )
 	then
 		System.out.println("Row: " + $loc.getRow() + " Column: " + $loc.getColumn());
-
 end
 
 rule "empty square"
@@ -86,6 +85,7 @@ rule "flag/unflag square"
 	then
 		System.out.println("Flag/Unflag Square Rule Fired!");
 		$grid.flagUnflagSquare($loc);
+		retract($loc);
 end
 
 rule "chord square"
@@ -96,4 +96,5 @@ rule "chord square"
 	then
 		System.out.println("Chord Square Rule Fired!");
 		$grid.chordSquare($loc);
+		retract($loc);
 end
