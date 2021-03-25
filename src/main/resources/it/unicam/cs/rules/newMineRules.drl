@@ -34,13 +34,16 @@ rule "Print Event Location"
 end
 */
 
-rule "Populate"
 
-	when
-		$grid : Grid(isPopulated() == false)
-	then
-		$grid.populate();
-		System.out.println($grid);
+rule "register north"
+    agenda-group "register neighbor"
+when
+    $square: Square( $location : location )
+    $north : Square( location.getRow()  == ($location.getRow() - 1), location.getColumn() == $location.getColumn() )
+then
+    insert( new Neighbor( $square, $north ) );
+    insert( new Neighbor( $north, $square ) );
+    System.out.println("North neighobr");
 end
 
 rule "register north east"
@@ -51,16 +54,7 @@ when
 then
     insert( new Neighbor( $square, $northEast ) );
     insert( new Neighbor( $northEast, $square ) );
-end
-
-rule "register north"
-    agenda-group "register neighbor"
-when
-    $square: Square( $location : location )
-    $north : Square( location.getRow()  == ($location.getRow() - 1), location.getColumn() == $location.getColumn() )
-then
-    insert( new Neighbor( $square, $north ) );
-    insert( new Neighbor( $north, $square ) );
+    System.out.println("North East neighobr");
 end
 
 rule "register north west"
@@ -71,6 +65,7 @@ when
 then
     insert( new Neighbor( $square, $northWest ) );
     insert( new Neighbor( $northWest, $square ) );
+    System.out.println("North West neighobr");
 end
 
 rule "register west"
@@ -81,6 +76,7 @@ when
 then
     insert( new Neighbor( $square, $west ) );
     insert( new Neighbor( $west, $square ) );
+    System.out.println("West neighobr");
 end
 
 rule "Uncover Empty"
@@ -88,11 +84,12 @@ rule "Uncover Empty"
 	when
     	$loc: Location( )
     	$theSquare: Square(location == $loc, type == SquareType.EMPTY, state == SquareState.COVERED)
-    	Neighbor(square == $theSquare, $neighbor: neighbor)
+    	Neighbor(square == $theSquare, $neighbor : neighbor)
 	then
 		System.out.println("Empty Square Rule Fired!");
     	modify ($theSquare) {setState(SquareState.UNCOVERED)}
-    	insert( $neighbor.getLocation() );
+    	insert( new Location($neighbor.getLocation().getRow(), $neighbor.getLocation().getColumn()));
+    	//retract($loc);
 end
 
 rule "Uncover Bomb"
@@ -103,6 +100,7 @@ rule "Uncover Bomb"
 	then
 		System.out.println("Bomb Square Rule Fired!");
 		modify ($theSquare) {setState(SquareState.UNCOVERED)}
+		retract($loc);
 end
 
 rule "Uncover Number"
@@ -113,28 +111,33 @@ rule "Uncover Number"
 	then
 		System.out.println("Number Square Rule Fired!");
 		modify ($theSquare) {setState(SquareState.UNCOVERED)}
+		retract($loc);
 end
 
 rule "Flag"
 	agenda-group "FLAG"
+	lock-on-active
 	when
 		$loc : Location( )
 		$theSquare: Square(location == $loc, state == SquareState.COVERED)
 	then
 		System.out.println("Flag Square Rule Fired!");
 		modify ($theSquare) {setState(SquareState.FLAGGED)}
+		retract($loc);
 end
 
 rule "Unflag"
 	agenda-group "FLAG"
+	lock-on-active
 	when
 		$loc : Location( )
 		$theSquare: Square(location == $loc, state == SquareState.FLAGGED)
 	then
 		System.out.println("Unflag Square Rule Fired!");
 		modify ($theSquare) {setState(SquareState.COVERED)}
+		retract($loc);
 end
-
+/*
 rule "Chord"
 	agenda-group "CHORD"
 	when
@@ -145,4 +148,6 @@ rule "Chord"
 	then
 		System.out.println("Chord Square Rule Fired!");
 		insert( $neighbor.getLocation() );
+		retract($loc);
 end
+*/

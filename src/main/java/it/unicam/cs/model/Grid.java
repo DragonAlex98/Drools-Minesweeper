@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import it.unicam.cs.controller.DroolsUtils;
 import it.unicam.cs.enumeration.GameState;
 import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.enumeration.SquareType;
@@ -125,7 +126,9 @@ public class Grid {
 			do {
 				newPoint = getRandomPoint();
 			} while (getSquareAt(newPoint) != null);
-			setSquareAt(new Bomb(newPoint), newPoint);
+			Bomb bomb = new Bomb(newPoint);
+			setSquareAt(bomb, newPoint);
+			DroolsUtils.getInstance().getKSession().insert(bomb);
 		}
 
 		for (int r = 0; r < config.getN_ROWS(); r++) {
@@ -134,13 +137,20 @@ public class Grid {
 				if (getSquareAt(location) == null) {
 					int numOfBombs = getNeighbourBombsCount(new Location(r, c));
 					if (numOfBombs == 0) {
-						setSquareAt(new Empty(location), location);
+						Empty empty = new Empty(location);
+						setSquareAt(empty, location);
+						DroolsUtils.getInstance().getKSession().insert(empty);
 					} else {
-						setSquareAt(new Number(location, numOfBombs), location);
+						Number number = new Number(location, numOfBombs);
+						setSquareAt(number, location);
+						DroolsUtils.getInstance().getKSession().insert(number);
 					}
 				}
 			}
 		}
+		DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "register neighbor" ).setFocus();
+		DroolsUtils.getInstance().getKSession().fireAllRules();
+		System.out.println(toString());
 	}
 
 	public boolean isPopulated() {

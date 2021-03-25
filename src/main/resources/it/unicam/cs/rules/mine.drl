@@ -12,7 +12,7 @@ import java.util.ArrayList;
 
 
 //declare any global variables here
-
+/*
 rule "Populate Grid"
 
 	when
@@ -98,3 +98,4 @@ rule "chord square"
 		$grid.chordSquare($loc);
 		retract($loc);
 end
+*/

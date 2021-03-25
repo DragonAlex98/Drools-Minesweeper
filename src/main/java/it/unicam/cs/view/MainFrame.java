@@ -101,9 +101,7 @@ public class MainFrame extends JFrame {
 	
 	private void newGame(Grid grid) {
 		this.grid = grid;
-		DroolsUtils.getInstance().clear();
-		DroolsUtils.getInstance().getKSession().insert(grid);
-		DroolsUtils.getInstance().getKSession().fireAllRules();
+		this.grid.populate();
 		setPreferredSize(determinePreferredDimension());
 		this.pack();
 		this.panel.init(grid);
