@@ -34,6 +34,15 @@ rule "Print Event Location"
 end
 */
 
+rule "Print neighbor"
+	agenda-group "debug"
+    when
+        $neig : ArrayList( )
+        	   from collect( Neighbor( ) )
+    then
+        System.out.println($neig);
+end
+
 
 rule "register north"
     agenda-group "register neighbor"
@@ -85,11 +94,13 @@ rule "Uncover Empty"
     	$loc: Location( )
     	$theSquare: Square(location == $loc, type == SquareType.EMPTY, state == SquareState.COVERED)
     	Neighbor(square == $theSquare, $neighbor : neighbor)
+    	Square(location == $neighbor.getLocation(), state == SquareState.COVERED )
 	then
 		System.out.println("Empty Square Rule Fired!");
-    	modify ($theSquare) {setState(SquareState.UNCOVERED)}
-    	insert( new Location($neighbor.getLocation().getRow(), $neighbor.getLocation().getColumn()));
-    	//retract($loc);
+		$theSquare.setState(SquareState.UNCOVERED);
+    	//modify ($theSquare) {setState(SquareState.UNCOVERED)}
+    	insert($neighbor.getLocation());
+    	retract($loc);
 end
 
 rule "Uncover Bomb"

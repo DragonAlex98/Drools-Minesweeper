@@ -100,6 +100,7 @@ public class MainFrame extends JFrame {
 	}
 	
 	private void newGame(Grid grid) {
+	    DroolsUtils.getInstance().clear();
 		this.grid = grid;
 		this.grid.populate();
 		setPreferredSize(determinePreferredDimension());

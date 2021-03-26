@@ -2,6 +2,7 @@ package it.unicam.cs.model;
 
 import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.enumeration.SquareType;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,6 +11,7 @@ import lombok.Setter;
  *
  */
 @Getter
+@EqualsAndHashCode(of = {"location"})
 public abstract class Square {
 
 	/** The state of this square **/
