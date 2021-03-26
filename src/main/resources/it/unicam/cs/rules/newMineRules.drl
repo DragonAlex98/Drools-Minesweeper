@@ -90,17 +90,39 @@ end
 
 rule "Uncover Empty"
     agenda-group "UNCOVER"
+    no-loop
 	when
     	$loc: Location( )
     	$theSquare: Square(location == $loc, type == SquareType.EMPTY, state == SquareState.COVERED)
     	Neighbor(square == $theSquare, $neighbor : neighbor)
+	then
+		System.out.println("Empty Square Rule Fired! Evaluating " + $loc);
+    	modify ($theSquare) {setState(SquareState.UNCOVERED)}
+end
+/* QUESTA RULE L'AVEVO MESSA PER GESTIRE LA CASISTICA  SQUARE COVERED - ALL NEIGHBORS UNCOVERED. POI HO AGGIUNTO l'ULTIMA CONDIZIONE DA QUELLA SOPRA QUINDI NON DOVREBBE PIU SERVIRE
+rule "Uncover Empty new rec"
+    agenda-group "UNCOVER"
+    no-loop
+	when
+    	$loc: Location( )
+    	$theSquare: Square(location == $loc, type == SquareType.EMPTY, state == SquareState.COVERED)
+    	Neighbor(square == $theSquare, $neighbor : neighbor)
+    	Square(location == $neighbor.getLocation(), state == SquareState.UNCOVERED )
+	then
+		System.out.println("Empty Square Rule Fired! Evaluating " + $loc);
+    	modify ($theSquare) {setState(SquareState.UNCOVERED)}
+end
+*/
+rule "Uncover Empty neigh"
+    agenda-group "UNCOVER"
+	when
+    	$loc: Location( )
+    	$theSquare: Square(location == $loc, type == SquareType.EMPTY, state == SquareState.UNCOVERED)
+    	Neighbor(square == $theSquare, $neighbor : neighbor)
     	Square(location == $neighbor.getLocation(), state == SquareState.COVERED )
 	then
-		System.out.println("Empty Square Rule Fired!");
-		$theSquare.setState(SquareState.UNCOVERED);
-    	//modify ($theSquare) {setState(SquareState.UNCOVERED)}
-    	insert($neighbor.getLocation());
-    	retract($loc);
+		System.out.println("Empty Square Rule Fired! Inserting " + $neighbor.getLocation());
+    	insert(new Location($neighbor.getLocation().getRow(), $neighbor.getLocation().getColumn()));
 end
 
 rule "Uncover Bomb"
@@ -116,6 +138,7 @@ end
 
 rule "Uncover Number"
 	agenda-group "UNCOVER"
+	no-loop
 	when
 		$loc : Location( )
 		$theSquare: Square(location == $loc, type == SquareType.NUMBER, state == SquareState.COVERED)
@@ -124,7 +147,14 @@ rule "Uncover Number"
 		modify ($theSquare) {setState(SquareState.UNCOVERED)}
 		retract($loc);
 end
-
+rule "Clear"
+	agenda-group "UNCOVER"
+	when
+		$loc : Location( )
+	then
+		System.out.println("Clear Location Rule Fired!");
+		retract($loc);
+end
 rule "Flag"
 	agenda-group "FLAG"
 	lock-on-active
