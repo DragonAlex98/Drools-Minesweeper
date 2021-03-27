@@ -179,17 +179,24 @@ rule "Unflag"
 		modify ($theSquare) {setState(SquareState.COVERED)}
 		retract($loc);
 end
-/*
+
 rule "Chord"
 	agenda-group "CHORD"
 	when
 		$loc : Location( )
-		$theSquare: Number(location == $loc, type == SquareType.NUMBER, state == SquareState.UNCOVERED)
-		//$theSquare.getNeighbourBombsCount() == accumulate ( Neighbor (square == $thesquare, neighbor.getState() == SquareState.FLAGGED); $cnt : count(1) ; $cnt > 1 )
-		Neighbor(square == $theSquare, $neighbor: neighbor)
+		$theSquare : Number(location == $loc, type == SquareType.NUMBER, state == SquareState.UNCOVERED)
+		$squares : ArrayList() from accumulate($square : Square() and Neighbor(square == $theSquare, neighbor == $square),
+			init(ArrayList list = new ArrayList();),
+			action(list.add($square);),
+			result(list));
+		
+		$countFlaggedSquares : Long() from accumulate(Square(state == SquareState.FLAGGED) from $squares, count(1))
+		eval($theSquare.getNeighbourBombsCount() == $countFlaggedSquares)
+		$coveredSquares : ArrayList( size() > 0 ) from collect(Square(state == SquareState.COVERED) from $squares)
 	then
-		System.out.println("Chord Square Rule Fired!");
-		insert( $neighbor.getLocation() );
-		retract($loc);
+		System.out.println("Chord Square Rule Fired! " + $squares.size());
+		System.out.println("Chord Square Rule Fired! " + $countFlaggedSquares);
+		System.out.println("Chord Square Rule Fired! " + $coveredSquares.size());
+		//insert( $neighbor.getLocation() );
+		//retract($loc);
 end
-*/
