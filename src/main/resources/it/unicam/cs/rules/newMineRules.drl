@@ -147,14 +147,15 @@ rule "Uncover Number"
 		modify ($theSquare) {setState(SquareState.UNCOVERED)}
 		retract($loc);
 end
+
 rule "Clear"
-	agenda-group "UNCOVER"
 	when
 		$loc : Location( )
 	then
 		System.out.println("Clear Location Rule Fired!");
 		retract($loc);
 end
+
 rule "Flag"
 	agenda-group "FLAG"
 	lock-on-active

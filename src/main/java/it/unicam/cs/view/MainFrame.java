@@ -67,9 +67,9 @@ public class MainFrame extends JFrame {
 						if (SwingUtilities.isRightMouseButton(e)) {
 							DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "FLAG" ).setFocus();
 						}
-						DroolsUtils.getInstance().getKSession().insert(squareLocation);
-						DroolsUtils.getInstance().getKSession().fireAllRules();
+						insertAndFire(squareLocation);
 						panel.repaint();
+						System.out.println(DroolsUtils.getInstance().getKSession().getFactCount());
 						System.out.println(MainFrame.this.grid);
 					}
 				}
@@ -78,6 +78,11 @@ public class MainFrame extends JFrame {
 			}
 		});
 		this.panel = panel;
+	}
+	
+	private synchronized void insertAndFire(Object object) {
+		DroolsUtils.getInstance().getKSession().insert(object);
+		DroolsUtils.getInstance().getKSession().fireAllRules();
 	}
 	
 	private boolean checkConfigurationValidity(Configuration configuration) {
