@@ -89,6 +89,7 @@ then
 end
 
 rule "Uncover Empty"
+	salience 100
     agenda-group "UNCOVER"
     no-loop
 	when
@@ -99,21 +100,9 @@ rule "Uncover Empty"
 		System.out.println("Empty Square Rule Fired! Evaluating " + $loc);
     	modify ($theSquare) {setState(SquareState.UNCOVERED)}
 end
-/* QUESTA RULE L'AVEVO MESSA PER GESTIRE LA CASISTICA  SQUARE COVERED - ALL NEIGHBORS UNCOVERED. POI HO AGGIUNTO l'ULTIMA CONDIZIONE DA QUELLA SOPRA QUINDI NON DOVREBBE PIU SERVIRE
-rule "Uncover Empty new rec"
-    agenda-group "UNCOVER"
-    no-loop
-	when
-    	$loc: Location( )
-    	$theSquare: Square(location == $loc, type == SquareType.EMPTY, state == SquareState.COVERED)
-    	Neighbor(square == $theSquare, $neighbor : neighbor)
-    	Square(location == $neighbor.getLocation(), state == SquareState.UNCOVERED )
-	then
-		System.out.println("Empty Square Rule Fired! Evaluating " + $loc);
-    	modify ($theSquare) {setState(SquareState.UNCOVERED)}
-end
-*/
+
 rule "Uncover Empty neigh"
+	salience 100
     agenda-group "UNCOVER"
 	when
     	$loc: Location( )
@@ -126,17 +115,20 @@ rule "Uncover Empty neigh"
 end
 
 rule "Uncover Bomb"
+	salience 25
 	agenda-group "UNCOVER"
 	when
 		$loc : Location( )
 		$theSquare: Square(location == $loc, type == SquareType.BOMB, state == SquareState.COVERED)
 	then
 		System.out.println("Bomb Square Rule Fired!");
-		modify ($theSquare) {setState(SquareState.UNCOVERED)}
+		drools.getKnowledgeRuntime().getAgenda().getAgendaGroup("UNCOVER").clear();
+		modify ($theSquare) {setState(SquareState.EXPLODED)}
 		retract($loc);
 end
 
 rule "Uncover Number"
+	salience 50
 	agenda-group "UNCOVER"
 	no-loop
 	when
@@ -197,6 +189,24 @@ rule "Chord"
 		System.out.println("Chord Square Rule Fired! " + $squares.size());
 		System.out.println("Chord Square Rule Fired! " + $countFlaggedSquares);
 		System.out.println("Chord Square Rule Fired! " + $coveredSquares.size());
-		//insert( $neighbor.getLocation() );
-		//retract($loc);
+		$coveredSquares.forEach(s -> insert(((Square)s).getLocation()));
+		drools.getKnowledgeRuntime().getAgenda().getAgendaGroup("UNCOVER").setFocus();
+end
+
+rule "LOSS"
+	agenda-group "LOSS"
+	when
+		$square : Square(state == SquareState.COVERED, type == SquareType.BOMB)
+	then
+		System.out.println("Loss Rule Fired!");
+		modify ($square) {setState(SquareState.UNCOVERED)}
+end
+
+rule "WIN"
+	agenda-group "WIN"
+	when
+		$square : Square(state == SquareState.COVERED)
+	then
+		System.out.println("Win Rule Fired!");
+		modify ($square) {setState(SquareState.FLAGGED)}
 end

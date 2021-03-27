@@ -32,6 +32,7 @@ public class MainFrame extends JFrame {
 	private Grid grid = null;
 	private MainPanel panel = null;
 	private ButtonModel selectedDifficultyButtonModel = null;
+	private GameState gameState;
 	
 	public void createNewGameGUI() {
 		MainPanel panel = new MainPanel();
@@ -41,7 +42,7 @@ public class MainFrame extends JFrame {
 			
 			@Override
 			public void mousePressed(MouseEvent e) {
-				if (MainFrame.this.grid.getState() != GameState.ONGOING) {
+				if (MainFrame.this.gameState != GameState.ONGOING) {
 					return;
 				}
 				if (SwingUtilities.isLeftMouseButton(e) || SwingUtilities.isRightMouseButton(e)) {
@@ -52,6 +53,9 @@ public class MainFrame extends JFrame {
 			
 			@Override
 			public void mouseReleased(MouseEvent e) {
+				if (MainFrame.this.gameState != GameState.ONGOING) {
+					return;
+				}
 				if (!mousePressed) {
 					return;
 				}
@@ -68,9 +72,18 @@ public class MainFrame extends JFrame {
 							DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "FLAG" ).setFocus();
 						}
 						insertAndFire(squareLocation);
+						MainFrame.this.gameState = MainFrame.this.grid.getGameState();
+						if (MainFrame.this.gameState == GameState.LOSS) {
+							DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "LOSS" ).setFocus();
+							DroolsUtils.getInstance().getKSession().fireAllRules();
+						}
+						if (MainFrame.this.gameState == GameState.WIN) {
+							DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "WIN" ).setFocus();
+							DroolsUtils.getInstance().getKSession().fireAllRules();
+						}
 						panel.repaint();
-						System.out.println(DroolsUtils.getInstance().getKSession().getFactCount());
 						System.out.println(MainFrame.this.grid);
+						System.out.println(DroolsUtils.getInstance().getKSession().getFactCount());
 					}
 				}
 				mousePressed = false;
@@ -108,6 +121,7 @@ public class MainFrame extends JFrame {
 	    DroolsUtils.getInstance().clear();
 		this.grid = grid;
 		this.grid.populate();
+		this.gameState = GameState.ONGOING;
 		setPreferredSize(determinePreferredDimension());
 		this.pack();
 		this.panel.init(grid);

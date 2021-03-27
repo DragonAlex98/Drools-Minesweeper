@@ -156,6 +156,16 @@ public class Grid {
 	public boolean isPopulated() {
 		return this.grid == null ? false : true;
 	}
+	
+	public GameState getGameState() {
+		if (this.getGridAsStream().filter(s -> s.getState() == SquareState.EXPLODED).findAny().isPresent()) {
+			return GameState.LOSS;
+		}
+		if (this.config.getN_BOMBS() == getGridAsStream().filter(s -> s.getState() == SquareState.COVERED || s.getState() == SquareState.FLAGGED).count()) {
+			return GameState.WIN;
+		}
+		return GameState.ONGOING;
+	}
 
 	public void updateGameState() {
 		if (this.config.getN_BOMBS() == getGridAsStream().filter(s -> s.getState() == SquareState.COVERED || s.getState() == SquareState.FLAGGED).count()) {
