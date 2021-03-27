@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
-import it.unicam.cs.controller.GridController;
 import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.enumeration.SquareType;
 import it.unicam.cs.model.Configuration;
@@ -120,7 +118,6 @@ public class CSPSolver {
 	public static void main(String[] args) {
 		Grid grid = new Grid(new Configuration(9, 9, 10));
 		grid.populate();
-		GridController controller = new GridController(grid);
 		Location randomEmptyLocation = grid.getGridAsStream().filter(sq -> sq.getState() == SquareState.COVERED && sq.getType() == SquareType.EMPTY).findAny().get().getLocation();
 		grid.uncoverSquare(randomEmptyLocation);
 		System.out.println(grid);

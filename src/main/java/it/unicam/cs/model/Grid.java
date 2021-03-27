@@ -114,6 +114,16 @@ public class Grid {
 	private int getNeighbourBombsCount(Location location) {
 		return (int) getNeighboursAsStream(location).filter(s -> s != null && s.getType() == SquareType.BOMB).count();
 	}
+	
+	public void populateSafeGrid(Location location) {
+		do {
+			populate();
+		} while(getSquareAt(location).getType() == SquareType.BOMB);
+		getGridAsStream().forEach(s -> DroolsUtils.getInstance().getKSession().insert(s));
+		DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup("register neighbor").setFocus();
+		DroolsUtils.getInstance().getKSession().fireAllRules();
+		System.out.println(toString());
+	}
 
 	/**
 	 * Method to populate the grid according to the Configuration.
@@ -128,7 +138,6 @@ public class Grid {
 			} while (getSquareAt(newPoint) != null);
 			Bomb bomb = new Bomb(newPoint);
 			setSquareAt(bomb, newPoint);
-			DroolsUtils.getInstance().getKSession().insert(bomb);
 		}
 
 		for (int r = 0; r < config.getN_ROWS(); r++) {
@@ -139,18 +148,13 @@ public class Grid {
 					if (numOfBombs == 0) {
 						Empty empty = new Empty(location);
 						setSquareAt(empty, location);
-						DroolsUtils.getInstance().getKSession().insert(empty);
 					} else {
 						Number number = new Number(location, numOfBombs);
 						setSquareAt(number, location);
-						DroolsUtils.getInstance().getKSession().insert(number);
 					}
 				}
 			}
 		}
-		DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "register neighbor" ).setFocus();
-		DroolsUtils.getInstance().getKSession().fireAllRules();
-		System.out.println(toString());
 	}
 
 	public boolean isPopulated() {

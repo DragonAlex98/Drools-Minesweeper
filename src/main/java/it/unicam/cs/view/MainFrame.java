@@ -19,12 +19,12 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import it.unicam.cs.controller.DroolsUtils;
-import it.unicam.cs.controller.GridController;
 import it.unicam.cs.enumeration.Difficulty;
 import it.unicam.cs.enumeration.GameState;
 import it.unicam.cs.model.Configuration;
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
+import it.unicam.cs.solver.Solver;
 
 public class MainFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -61,6 +61,9 @@ public class MainFrame extends JFrame {
 				}
 				if (SwingUtilities.isLeftMouseButton(e) || SwingUtilities.isRightMouseButton(e)) {
 					if (panel.getSquareLocation(e.getPoint()).equals(squareLocation)) {
+						if (!MainFrame.this.grid.isPopulated()) {
+							MainFrame.this.grid.populateSafeGrid(squareLocation);
+						}
 						if (SwingUtilities.isLeftMouseButton(e)) {
 							if (e.getClickCount() == 1) {
 								DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "UNCOVER" ).setFocus();
@@ -120,14 +123,13 @@ public class MainFrame extends JFrame {
 	private void newGame(Grid grid) {
 	    DroolsUtils.getInstance().clear();
 		this.grid = grid;
-		this.grid.populate();
 		this.gameState = GameState.ONGOING;
-		setPreferredSize(determinePreferredDimension());
+		this.panel.setPreferredSize(determinePreferredDimension());
 		this.pack();
 		this.panel.init(grid);
 	}
 
-	public MainFrame(String title, Grid grid, GridController controller) {
+	public MainFrame(String title, Grid grid) {
 		super(title);
 
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -218,7 +220,18 @@ public class MainFrame extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				//TODO: add solver UI and/or logic
+				Solver solver = new Solver(MainFrame.this.grid);
+				solver.solve();
+				MainFrame.this.gameState = MainFrame.this.grid.getGameState();
+				if (MainFrame.this.gameState == GameState.LOSS) {
+					DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "LOSS" ).setFocus();
+					DroolsUtils.getInstance().getKSession().fireAllRules();
+				}
+				if (MainFrame.this.gameState == GameState.WIN) {
+					DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "WIN" ).setFocus();
+					DroolsUtils.getInstance().getKSession().fireAllRules();
+				}
+				panel.repaint();
 			}
 		});
         

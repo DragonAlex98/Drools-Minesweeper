@@ -141,6 +141,7 @@ rule "Uncover Number"
 end
 
 rule "Clear"
+	salience 0
 	when
 		$loc : Location( )
 	then

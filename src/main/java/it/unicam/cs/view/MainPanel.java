@@ -53,6 +53,8 @@ public class MainPanel extends JPanel {
 			@Override
 			public void componentResized(ComponentEvent e) {
 				updateImages();
+				revalidate();
+				repaint();
 			}
 		});
 		updateImages();
@@ -69,7 +71,7 @@ public class MainPanel extends JPanel {
 	
 	@Override
 	public void paintComponent(Graphics g) {
-		if (grid == null || !grid.isPopulated()) {
+		if (grid == null) {
 			return;
 		}
 		if (squareWidth == 0.0f || squareHeight == 0.0f) {
@@ -78,11 +80,20 @@ public class MainPanel extends JPanel {
 		g.setColor(Color.LIGHT_GRAY);
 		g.fillRect(0, 0, getWidth(), getHeight());
 
-		grid.getGridAsStream().forEach(s -> {
-			String string = SquareImages.getInstance().getSquareImage(s);
-			g.drawImage(images.get(string), (int)(squareWidth*s.getLocation().getColumn()), (int)(squareHeight*s.getLocation().getRow()), null);
-			return;
-		});
+		if (grid.isPopulated()) {
+			grid.getGridAsStream().forEach(s -> {
+				String string = SquareImages.getInstance().getSquareImage(s);
+				g.drawImage(images.get(string), (int)(squareWidth*s.getLocation().getColumn()), (int)(squareHeight*s.getLocation().getRow()), null);
+				return;
+			});
+		} else {
+			Image coveredImage = images.get("covered");
+			for (int r = 0; r < grid.getConfig().getN_ROWS(); r++) {
+				for (int c = 0; c < grid.getConfig().getN_COLUMNS(); c++) {
+					g.drawImage(coveredImage, (int)(squareWidth*c), (int)(squareHeight*r), null);
+				}
+			}
+		}
 		
 		g.setColor(Color.DARK_GRAY);
 		Graphics2D g2d = (Graphics2D) g;
