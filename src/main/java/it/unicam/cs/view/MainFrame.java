@@ -28,7 +28,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.Timer;
 
 import it.unicam.cs.controller.DroolsUtils;
 import it.unicam.cs.enumeration.Difficulty;
@@ -373,7 +372,7 @@ public class MainFrame extends JFrame {
 			DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "WIN" ).setFocus();
 			DroolsUtils.getInstance().getKSession().fireAllRules();
 			panel.repaint();
-			Icon icon = new ImageIcon( new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/explosion.gif")).getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT));
+			Icon icon = new ImageIcon( new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/fireworks.gif")).getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT));
 			JOptionPane.showMessageDialog(panel, "Congratulation, You Win!", "Message", 1, icon);
 		}
 	}
