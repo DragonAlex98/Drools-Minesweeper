@@ -1,26 +1,39 @@
 package it.unicam.cs.view;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 
+import javax.imageio.ImageIO;
 import javax.swing.ButtonGroup;
 import javax.swing.ButtonModel;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 import it.unicam.cs.controller.DroolsUtils;
 import it.unicam.cs.enumeration.Difficulty;
 import it.unicam.cs.enumeration.GameState;
+import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.model.Configuration;
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
@@ -151,8 +164,70 @@ public class MainFrame extends JFrame {
 
         createNewGameGUI();
         newGame(grid);
+        try {
+			this.setIconImage(ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/bomb.png")));
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+        
+        JPanel pan = new JPanel();
+        pan.setPreferredSize(new Dimension(1, 32));
+        pan.setLayout(new GridLayout(0,3));
+        
+        // bomb count panel
+        JPanel bombCountPanel = new JPanel() {
+			private static final long serialVersionUID = 1L;
+			
+			@Override
+        	public void paintComponent(Graphics g) {
+				if (MainFrame.this.grid == null || !MainFrame.this.grid.isPopulated()) {
+					return;
+				}
+				long b = (MainFrame.this.grid.getConfig().getN_BOMBS() - MainFrame.this.grid.getGridAsStream().filter(s->s.getState() == SquareState.FLAGGED).count());
+        		g.drawString("Bombs: " + b, 5,20);
+        	}
+        };
+        bombCountPanel.addComponentListener(new ComponentAdapter() {
+        	// TODO change listener
+        	
+			@Override
+			public void componentResized(ComponentEvent e) {
+				revalidate();
+				repaint();
+			}
+		});
+        
+        // smile panel
+        JPanel smilePanel = new JPanel() {
+			private static final long serialVersionUID = 1L;
+			
+			@Override
+        	public void paintComponent(Graphics g) {
+        		try {
+					g.drawImage(ImageIO.read(MainFrame.class.getResource("/it/unicam/cs/images/smile.png")), getWidth()/2-16,0,null);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+        	}
+        };
+        smilePanel.addComponentListener(new ComponentAdapter() {
+            // TODO change listener
+        	
+			@Override
+			public void componentResized(ComponentEvent e) {
+				revalidate();
+				repaint();
+			}
+		});
 
-		this.getContentPane().add(this.panel, null);
+		// time
+        
+        pan.add(bombCountPanel);
+        pan.add(smilePanel);
+        
+        this.getContentPane().setLayout(new BorderLayout());
+        this.getContentPane().add(pan, BorderLayout.PAGE_START);
+		this.getContentPane().add(this.panel, BorderLayout.CENTER);
 		this.setVisible(true);
 		this.pack();
 	}
@@ -201,9 +276,9 @@ public class MainFrame extends JFrame {
 							DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "FLAG" ).setFocus();
 						}
 						insertAndFire(squareLocation);
+						panel.repaint();
 						MainFrame.this.gameState = MainFrame.this.grid.getGameState(); // update state
 						fireWinLossRules();
-						panel.repaint();
 						System.out.println(MainFrame.this.grid);
 						System.out.println(DroolsUtils.getInstance().getKSession().getFactCount());
 					}
@@ -290,10 +365,16 @@ public class MainFrame extends JFrame {
 		if (MainFrame.this.gameState == GameState.LOSS) {
 			DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "LOSS" ).setFocus();
 			DroolsUtils.getInstance().getKSession().fireAllRules();
+			panel.repaint();
+			Icon icon = new ImageIcon( new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/explosion.gif")).getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT));
+			JOptionPane.showMessageDialog(panel, "Bomb Uncovered, You Lose!", "Message", 1, icon);
 		}
 		if (MainFrame.this.gameState == GameState.WIN) {
 			DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "WIN" ).setFocus();
 			DroolsUtils.getInstance().getKSession().fireAllRules();
+			panel.repaint();
+			Icon icon = new ImageIcon( new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/explosion.gif")).getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT));
+			JOptionPane.showMessageDialog(panel, "Congratulation, You Win!", "Message", 1, icon);
 		}
 	}
 }
