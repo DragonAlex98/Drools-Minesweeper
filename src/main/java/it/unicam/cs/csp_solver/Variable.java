@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import it.unicam.cs.model.Square;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,6 +18,7 @@ import lombok.Setter;
  *
  */
 @Getter
+@EqualsAndHashCode
 public class Variable {
 	
 	private Square square;

@@ -1,15 +1,18 @@
 package it.unicam.cs.csp_solver;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.ListUtils;
+import org.chocosolver.solver.Model;
+import org.chocosolver.solver.Solution;
+import org.chocosolver.solver.Solver;
+import org.chocosolver.solver.variables.IntVar;
 
 import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.enumeration.SquareType;
@@ -20,35 +23,19 @@ import it.unicam.cs.model.Location;
 import it.unicam.cs.model.Number;
 import it.unicam.cs.model.Square;
 
-/**
- * This is the main class that manages the solver that uses CSP. 
- * 
- * @author RICCARDO
- *
- */
-public class CSPSolver {
+public class ChocoCSPSolver {
+	
 	private Grid grid;
 	
-	private CSP csp;
+	private Model cspModel;
 	
-	public CSPSolver(Grid grid) {
+	public ChocoCSPSolver(Grid grid) {
 		this.grid = grid;
-		this.csp = this.initCSP();
+		this.cspModel = new Model("Alfredino CSP");
 	}
+	
 
-	/**
-	 * Initialize the variables.
-	 * 
-	 * For each square in the grid i check its state and i create a variable:
-	 * 
-	 * If the square is flagged then its domain has to be 1.
-	 * If the square is uncovered then its domain has to be 0, if the square is empty, otherwise it is its label.
-	 * 
-	 * If it is none of the above then its domain has to be [0,1].
-	 * 
-	 * @return
-	 */
-	private List<Variable> initVariables() {
+	private List<Variable> customInitVariables() {
 		List<Variable> variables = new ArrayList<Variable>();
 		
 		for (int r = 0; r < this.grid.getConfig().getN_ROWS(); r++) {
@@ -74,21 +61,7 @@ public class CSPSolver {
 		return variables;
 	}
 	
-	/**
-	 * Initialize the constraints.
-	 * 
-	 * First of all retrieve only the variables that are in the frontier.
-	 * 
-	 * The scope of each frontier variable is composed by all the covered variables in their neighbor.
-	 * 
-	 * Then calculate the effective label of the variable related to this constraint, that is the label - number of flag placed in its neighbor.
-	 * 
-	 * At the end all the constraints are sorted considering the number of variables in their scope.
-	 * 
-	 * @param variables
-	 * @return
-	 */
-	private List<Constraint> initConstraints(List<Variable> variables) {
+	private List<Constraint> customInitConstraints(List<Variable> variables) {
 		List<Constraint> constraints = new ArrayList<Constraint>();
 		
 		List<Variable> frontierVariables = VariableUtils.getInstance().getFrontierVariables(variables);
@@ -115,21 +88,6 @@ public class CSPSolver {
 		return constraints;
 	}
 	
-	/**
-	 * This method reduces the scope of constraints.
-	 * 
-	 * Example:
-	 * 
-	 * c1=[v1,v2,v3] and c2=[v1,v2] then c1-->[v3]
-	 * 
-	 * However in the case:
-	 * 
-	 * c1=[v1,v2,v3] and c2=[v3,v4] then nothing happens
-	 * c1=[v1,v2,v3] and c2=[v2,v3,v4] then nothing happens
-	 * 
-	 * @param constraints
-	 * @return
-	 */
 	private List<Constraint> reduceConstraintsScope(List<Constraint> constraints) {
 		for (Constraint constraint : constraints) {
 			// Take only the constraint that are connected to this one (that contain some element of its scope in themselves).
@@ -184,16 +142,6 @@ public class CSPSolver {
 		return constraints;
 	}
 	
-	/**
-	 * Method that aggregates the vars that are shared (minimum 2 shared) between 2 constraints and create a new var and 2 more constraints.
-	 * 
-	 * EXAMPLE:
-	 * 
-	 * c1=[v1,v2,v3] c2=[v2,v3,v4] --> creates a new var nV=(v2,v3) and creates 2 more constraints connecting the previous ones: c3=[v1,nV] c4=[nV,v4] 
-	 * 
-	 * @param constraints
-	 * @return
-	 */
 	private List<MergedVariable> aggregateConstraintsScopes(List<Constraint> constraints) {
 		
 		List<MergedVariable> newVariables = new ArrayList<MergedVariable>();
@@ -253,37 +201,114 @@ public class CSPSolver {
 		
 		return newVariables;
 	}
-	
+
+	private void initConstraints(IntVar[][] chochoVars, List<Constraint> constraints) {
+		for (Constraint constraint : constraints) {
+			
+			if (constraint.getScope().stream().anyMatch(MergedVariable.class::isInstance))
+				continue;
+			
+			IntVar[] chocoScopeVars = new IntVar[constraint.getScope().size()];
+			
+			for (int i = 0; i < chocoScopeVars.length; i++) {
+				Variable var = constraint.getScope().get(i);
+				chocoScopeVars[i] = chochoVars[var.getSquare().getLocation().getRow()][var.getSquare().getLocation().getColumn()];
+			}
+			
+			this.cspModel.sum(chocoScopeVars, "=", constraint.getEffectiveLabel()).post();
+			
+		}
+	}
+
 	private CSP initCSP() {
-		List<Variable> variables = this.initVariables();
-		List<Constraint> constraints = this.initConstraints(variables);
+		List<Variable> variables = this.customInitVariables();
+		List<Constraint> constraints = this.customInitConstraints(variables);
 		constraints = this.reduceConstraintsScope(constraints);
 		List<MergedVariable> mergedVars = this.aggregateConstraintsScopes(constraints);
 		Collections.sort(constraints);
+		
+		
+		IntVar[][] chocoVariables = this.initVariables();
+		
+		this.initConstraints(chocoVariables, constraints);
+		
+		Solver solver = this.cspModel.getSolver();
+		
+		IntVar[] toCheckVariables = null;
+		Set<Variable> coveredNeighborsOfFrontierVariables = new HashSet<Variable>();
+		
+		for (Variable var : VariableUtils.getInstance().getFrontierVariables(variables)) {
+			coveredNeighborsOfFrontierVariables.addAll(this.grid.getNeighboursAsStream(var.getSquare().getLocation()).filter(neigh -> neigh.getState() == SquareState.COVERED).map(square -> VariableUtils.getInstance().getVariableFromSquare(square, variables)).collect(Collectors.toSet()));
+		}
+		
+		toCheckVariables = new IntVar[coveredNeighborsOfFrontierVariables.size()];
+		
+		toCheckVariables = coveredNeighborsOfFrontierVariables.stream().map(covvar -> chocoVariables[covvar.getSquare().getLocation().getRow()][covvar.getSquare().getLocation().getColumn()]).toArray(IntVar[]::new);
+		
+		Solution solution = new Solution(cspModel, toCheckVariables);
+		
+		if(solver.solve()){
+		    // do something, e.g. print out variable values
+			System.out.println(solver.getDecisionCount());
+			solution.record();
+		}else {
+		    System.out.println("The solver has proved the problem has no solution");
+		}
+		
 		return new CSP("alfredino", variables, constraints);
 	}
 
+
+	public IntVar[][] initVariables() {
+		IntVar[][] variables = new IntVar[this.grid.getConfig().getN_ROWS()][this.grid.getConfig().getN_COLUMNS()];
+		
+		for (int r = 0; r < this.grid.getConfig().getN_ROWS(); r++) {
+			for (int c = 0; c < this.grid.getConfig().getN_COLUMNS(); c++) {
+				Square square = this.grid.getSquareAt(new Location(r, c));
+				//Variable variable = null;
+				String varName = "v(" + r + "," + c + ")";
+				if (square.getState() == SquareState.FLAGGED) {
+					variables[r][c] = this.cspModel.intVar(varName, 1);
+				} else if (square.getState() == SquareState.UNCOVERED) {
+					variables[r][c] = this.cspModel.intVar(varName, 0);
+					/*
+					variable = new Variable(square, 0);
+					if (square instanceof Empty) {
+						variable.setAssignedValue(0);
+					} else if (square instanceof Number) {
+						variable.setAssignedValue(((Number) square).getNeighbourBombsCount());
+					}
+					*/
+				} else {
+					variables[r][c] = this.cspModel.intVar(varName, 0, 1);
+					//variable = new Variable(square, 0, 1);
+				}
+				//variables.add(variable);
+			}
+		}
+		
+		return variables;
+	}
+	
 	public static void main(String[] args) {
+		
 		Grid grid = new Grid(new Configuration(10, 10, 20));
 		grid.populate();
 		Location randomEmptyLocation = grid.getGridAsStream().filter(sq -> sq.getState() == SquareState.COVERED && sq.getType() == SquareType.EMPTY).findAny().get().getLocation();
 		grid.uncoverSquare(randomEmptyLocation);
+		System.out.println(grid);
+		/*
 		randomEmptyLocation = grid.getGridAsStream().filter(sq -> sq.getState() == SquareState.COVERED && sq.getType() == SquareType.EMPTY).findAny().get().getLocation();
 		grid.uncoverSquare(randomEmptyLocation);
 		System.out.println(grid);
 		CSPSolver solver = new CSPSolver(grid);
-		
-		/*
-		do {
-			randomLocation = grid.getRandomPoint();
-		} while(grid.getSquareAt(randomLocation).getType() == SquareType.BOMB);
-		controller.uncoverSquare(randomLocation);
-		solver.nextState();
-		if (grid.getState() == GameState.WIN) {
-			win++;
-		} else {
-			lose++;
-		}
 		*/
+		
+		ChocoCSPSolver cspSolver = new ChocoCSPSolver(grid);
+		
+		cspSolver.initCSP();
+		
+		
+		System.out.println("");
 	}
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import lombok.Getter;
+import lombok.Setter;
 
 /**
  * A constraint is related to a variable.
@@ -22,12 +23,14 @@ public class Constraint implements Comparable<Constraint> {
 	
 	private Variable variable;
 	
+	@Setter
 	private List<Variable> scope;
 	
 	private Map<Assignment, Boolean> satisfying_tuples;
 	
 	private Map<Map<Variable, Integer>, Assignment> support_tuples;
 	
+	@Setter
 	private Integer effectiveLabel;
 	
 	public Constraint(Variable variable, List<Variable> scope, Integer effectiveLabel) {
@@ -71,16 +74,16 @@ public class Constraint implements Comparable<Constraint> {
 		
 		scope.append("[");
 		for (Variable variable : this.scope) {
-			scope.append("(" + variable.getSquare().getLocation() + "), ");
+			scope.append("(" + (variable.getSquare() == null ? "merged var" : variable.getSquare().getLocation()) + "), ");
 		}
 		scope.append("]");
 		
-		return "Constraint [variable= [" + variable.getSquare().getLocation() + ", value= " + variable.getAssignedValue() + "], scope=" + scope.toString() + "]";
+		return "Constraint [variable= [" + variable.getSquare().getLocation() + ", label= " + variable.getAssignedValue() + "], scope=" + scope.toString() + ", effective label = " + this.getEffectiveLabel() + " ]";
 	}
 
 	@Override
 	public int compareTo(Constraint o) {
-		Integer scopeSize = this.scope.size();
+		Integer scopeSize = (this.scope.stream().anyMatch(MergedVariable.class::isInstance)) ? Integer.MAX_VALUE : this.scope.size();
 		return scopeSize.compareTo(o.getScope().size());
 	}
 }

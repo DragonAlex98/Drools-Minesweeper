@@ -1,8 +1,10 @@
 package it.unicam.cs.csp_solver;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import it.unicam.cs.enumeration.SquareState;
@@ -76,6 +78,23 @@ public class VariableUtils {
 		}
 		
 		return foundVars;
+	}
+	
+	public List<Variable> getUnion(List<Variable> variables1, List<Variable> variables2) {
+		Set<Variable> unionSet = new HashSet<Variable>();
+
+		unionSet.addAll(variables1);
+		unionSet.addAll(variables2);
+		
+		return unionSet.stream().collect(Collectors.toList());
+	}
+	
+	public List<Variable> getIntersection(List<Variable> variables1, List<Variable> variables2) {
+		return variables1.stream().filter(element -> variables2.contains(element)).collect(Collectors.toList());
+	}
+
+	public List<Variable> getDifference(List<Variable> variables1, List<Variable> variables2) {
+		return variables1.stream().filter(element -> !variables2.contains(element)).collect(Collectors.toList());
 	}
 	
 }
