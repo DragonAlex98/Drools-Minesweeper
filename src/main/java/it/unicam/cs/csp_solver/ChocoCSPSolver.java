@@ -251,6 +251,7 @@ public class ChocoCSPSolver {
 		    // do something, e.g. print out variable values
 			System.out.println(solver.getDecisionCount());
 			solution.record();
+			System.out.println(solution);
 		}else {
 		    System.out.println("The solver has proved the problem has no solution");
 		}
