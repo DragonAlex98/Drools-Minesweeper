@@ -1,33 +1,44 @@
 package it.unicam.cs.view;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.GridLayout;
+import java.awt.GraphicsEnvironment;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.ButtonModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 import it.unicam.cs.controller.DroolsUtils;
 import it.unicam.cs.enumeration.Difficulty;
@@ -45,6 +56,8 @@ public class MainFrame extends JFrame {
 	private MainPanel panel = null;
 	private ButtonModel selectedDifficultyButtonModel = null;
 	private GameState gameState;
+	private Timer timer = null;
+	private int elapsedSeconds = 0;
 	
 	public MainFrame(String title, Grid grid) {
 		super(title);
@@ -52,6 +65,38 @@ public class MainFrame extends JFrame {
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setResizable(true);
 		this.setLocationRelativeTo(null);
+		try {
+			this.setIconImage(ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/bomb.png")));
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		this.addWindowListener(new WindowAdapter() {
+
+			@Override
+			public void windowIconified(WindowEvent e) {
+				if (timer != null && MainFrame.this.grid.isPopulated() && MainFrame.this.gameState == GameState.ONGOING) {
+					timer.stop();
+				}
+				super.windowIconified(e);
+			}
+
+			@Override
+			public void windowDeiconified(WindowEvent e) {
+				if (timer != null && MainFrame.this.grid.isPopulated() && MainFrame.this.gameState == GameState.ONGOING) {
+					timer.start();
+				}
+				super.windowDeiconified(e);
+			}
+		});
+
+		Font customFont = null;
+		try {
+			customFont = Font.createFont(Font.TRUETYPE_FONT, MainFrame.class.getResourceAsStream("/it/unicam/cs/font/digital.ttf")).deriveFont(36f);
+			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+			ge.registerFont(customFont);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		JMenuBar menuBar = new JMenuBar();
 		
@@ -68,6 +113,7 @@ public class MainFrame extends JFrame {
 				newGame(grid);
 			}
 		});
+        newGameMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
         gameMenu.add(newGameMenuItem);
         gameMenu.addSeparator();
         
@@ -86,6 +132,7 @@ public class MainFrame extends JFrame {
     				newGame(grid);
     			}
     		});
+            newDifficultyGameMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_1 + difficulty.ordinal(), KeyEvent.CTRL_MASK));
             if (difficulty == Difficulty.BEGINNER) {
 				newDifficultyGameMenuItem.setSelected(true);
 				selectedDifficultyButtonModel = buttonGroup.getSelection();
@@ -131,6 +178,7 @@ public class MainFrame extends JFrame {
 				buttonGroup.setSelected(selectedDifficultyButtonModel, true);
 			}
 		});
+        customDifficultyGameMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_4, KeyEvent.CTRL_MASK));
         gameMenu.add(customDifficultyGameMenuItem);
         buttonGroup.add(customDifficultyGameMenuItem);
 
@@ -146,6 +194,7 @@ public class MainFrame extends JFrame {
 				solve(false);
 			}
 		});
+        solveMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_MASK));
         // Solve by step button
         JMenuItem solveByStepMenuItem = new JMenuItem("Solve by step");
         solveByStepMenuItem.addActionListener(new ActionListener() {
@@ -154,7 +203,8 @@ public class MainFrame extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				solve(true);
 			}
-		});        
+		});
+        solveByStepMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.CTRL_MASK));
         solverMenu.add(solveMenuItem);
         solverMenu.add(solveByStepMenuItem);
         
@@ -163,69 +213,91 @@ public class MainFrame extends JFrame {
 
         createNewGameGUI();
         newGame(grid);
-        try {
-			this.setIconImage(ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/bomb.png")));
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
         
-        JPanel pan = new JPanel();
-        pan.setPreferredSize(new Dimension(1, 32));
-        pan.setLayout(new GridLayout(0,3));
+        JPanel topPanel = new JPanel();
+        topPanel.setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+		c.weightx = 0.5;
+		c.gridx = 0;
+		c.gridy = 0;
         
-        // bomb count panel
-        JPanel bombCountPanel = new JPanel() {
+        JLabel bombCountLabel = new JLabel() {
 			private static final long serialVersionUID = 1L;
-			
-			@Override
-        	public void paintComponent(Graphics g) {
-				if (MainFrame.this.grid == null || !MainFrame.this.grid.isPopulated()) {
-					return;
-				}
-				long b = (MainFrame.this.grid.getConfig().getN_BOMBS() - MainFrame.this.grid.getGridAsStream().filter(s->s.getState() == SquareState.FLAGGED).count());
-        		g.drawString("Bombs: " + b, 5,20);
-        	}
-        };
-        bombCountPanel.addComponentListener(new ComponentAdapter() {
-        	// TODO change listener
-        	
-			@Override
-			public void componentResized(ComponentEvent e) {
-				revalidate();
-				repaint();
-			}
-		});
-        
-        // smile panel
-        JPanel smilePanel = new JPanel() {
-			private static final long serialVersionUID = 1L;
-			
-			@Override
-        	public void paintComponent(Graphics g) {
-        		try {
-					g.drawImage(ImageIO.read(MainFrame.class.getResource("/it/unicam/cs/images/smile.png")), getWidth()/2-16,0,null);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-        	}
-        };
-        smilePanel.addComponentListener(new ComponentAdapter() {
-            // TODO change listener
-        	
-			@Override
-			public void componentResized(ComponentEvent e) {
-				revalidate();
-				repaint();
-			}
-		});
 
-		// time
+			@Override
+			protected void paintComponent(Graphics g) {
+				int remainingBombsCount = MainFrame.this.grid.getConfig().getN_BOMBS();
+				if (MainFrame.this.grid.isPopulated()) {
+					remainingBombsCount -= MainFrame.this.grid.getGridAsStream().filter(s->s.getState() == SquareState.FLAGGED).count();
+				}
+				setText(String.format("%03d", remainingBombsCount));
+				super.paintComponent(g);
+        	}
+        };
+        bombCountLabel.setFont(customFont);
+        bombCountLabel.setForeground(Color.RED);
+		bombCountLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
+        topPanel.add(bombCountLabel, c);
+
+        c.fill = GridBagConstraints.NONE;
+		c.weightx = 0.5;
+		c.weighty = 1;
+		c.gridx = 1;
+		c.gridy = 0;
+
+        Icon smileIcon = new ImageIcon(new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/smile.png")).getImage().getScaledInstance(32, 32, Image.SCALE_DEFAULT));
+        JButton smileButton = new JButton(smileIcon);
+        smileButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Configuration configuration = MainFrame.this.grid.getConfig();
+				Grid grid = new Grid(configuration);
+				newGame(grid);
+			}
+		});
+        smileButton.setMinimumSize(new Dimension(smileIcon.getIconWidth(), smileIcon.getIconHeight()));
+		smileButton.setPreferredSize(new Dimension(smileIcon.getIconWidth(), smileIcon.getIconHeight()));
+        topPanel.add(smileButton, c);
         
-        pan.add(bombCountPanel);
-        pan.add(smilePanel);
+        c.fill = GridBagConstraints.HORIZONTAL;
+		c.weightx = 0.5;
+		c.weighty = 0;
+		c.gridx = 2;
+		c.gridy = 0;
+
+		JLabel timerLabel = new JLabel() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void paintComponent(Graphics g) {
+				setText(String.format("%03d", elapsedSeconds));
+				super.paintComponent(g);
+        	}
+        };
+        timerLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        timerLabel.setFont(customFont);
+        timerLabel.setForeground(Color.RED);
+        timerLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
+        
+        timer = new Timer(1000, new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (elapsedSeconds < 999) {
+					elapsedSeconds++;
+				}
+				System.out.println(elapsedSeconds);
+				timerLabel.repaint();
+			}
+		});
+		timer.setRepeats(true);
+        
+        topPanel.add(timerLabel, c);
         
         this.getContentPane().setLayout(new BorderLayout());
-        this.getContentPane().add(pan, BorderLayout.PAGE_START);
+        this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
 		this.getContentPane().add(this.panel, BorderLayout.CENTER);
 		this.setVisible(true);
 		this.pack();
@@ -263,6 +335,7 @@ public class MainFrame extends JFrame {
 					if (panel.getSquareLocation(e.getPoint()).equals(squareLocation)) { // if released location == pressed location
 						if (!MainFrame.this.grid.isPopulated()) { // populate grid if not
 							MainFrame.this.grid.populateSafeGrid(squareLocation);
+							timer.start();
 						}
 						if (SwingUtilities.isLeftMouseButton(e)) {
 							if (e.getClickCount() == 1) { // if 1 left click, activate UNCOVER rules
@@ -275,9 +348,12 @@ public class MainFrame extends JFrame {
 							DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "FLAG" ).setFocus();
 						}
 						insertAndFire(squareLocation);
-						panel.repaint();
 						MainFrame.this.gameState = MainFrame.this.grid.getGameState(); // update state
-						fireWinLossRules();
+						MainFrame.this.repaint();
+						if (MainFrame.this.gameState != GameState.ONGOING) {
+							timer.stop();
+							fireWinLossRules();
+						}
 						System.out.println(MainFrame.this.grid);
 						System.out.println(DroolsUtils.getInstance().getKSession().getFactCount());
 					}
@@ -336,11 +412,16 @@ public class MainFrame extends JFrame {
 	 */
 	private void newGame(Grid grid) {
 	    DroolsUtils.getInstance().clear();
+	    if (timer != null) {
+	    	timer.stop();
+	    }
+	    this.elapsedSeconds = 0;
 		this.grid = grid;
 		this.gameState = GameState.ONGOING;
 		this.panel.setPreferredSize(determinePreferredDimension());
 		this.pack();
 		this.panel.init(grid);
+		this.repaint();
 	}
 	
 
@@ -350,28 +431,29 @@ public class MainFrame extends JFrame {
      * @param isByStep True if the Solver should perform only one resolution step, False otherwise.
      */
     private void solve(boolean isByStep) {
-		Solver solver = new Solver(MainFrame.this.grid);
+    	if (this.gameState == GameState.ONGOING) {
+    		this.elapsedSeconds = 999;
+    		this.timer.stop();
+    	}
+		Solver solver = new Solver(this.grid);
 		solver.solve(isByStep);
-		MainFrame.this.gameState = MainFrame.this.grid.getGameState();
+		this.gameState = this.grid.getGameState();
 		fireWinLossRules();
-		panel.repaint();
+		this.repaint();
 	}
 
 	/**
 	 * Method to fire the corresponding rules in case of victory or defeat.
 	 */
 	private void fireWinLossRules() {
+		DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup(this.gameState.name()).setFocus();
+		DroolsUtils.getInstance().getKSession().fireAllRules();
+		this.repaint();
 		if (MainFrame.this.gameState == GameState.LOSS) {
-			DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "LOSS" ).setFocus();
-			DroolsUtils.getInstance().getKSession().fireAllRules();
-			panel.repaint();
 			Icon icon = new ImageIcon( new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/explosion.gif")).getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT));
 			JOptionPane.showMessageDialog(panel, "Bomb Uncovered, You Lose!", "Message", 1, icon);
 		}
 		if (MainFrame.this.gameState == GameState.WIN) {
-			DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "WIN" ).setFocus();
-			DroolsUtils.getInstance().getKSession().fireAllRules();
-			panel.repaint();
 			Icon icon = new ImageIcon( new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/fireworks.gif")).getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT));
 			JOptionPane.showMessageDialog(panel, "Congratulation, You Win!", "Message", 1, icon);
 		}
