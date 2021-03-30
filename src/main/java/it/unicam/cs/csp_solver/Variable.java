@@ -1,9 +1,7 @@
 package it.unicam.cs.csp_solver;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import it.unicam.cs.model.Square;
 import lombok.EqualsAndHashCode;

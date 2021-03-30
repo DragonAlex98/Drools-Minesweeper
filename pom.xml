@@ -15,6 +15,7 @@
   <properties>
     <runtime.version>7.0.0.Final</runtime.version>
     <lombok.version>1.18.18</lombok.version>
+    <choco.version>4.10.6</choco.version>
   </properties>
 
   <repositories>
@@ -28,7 +29,7 @@
       </releases>
       <snapshots>
         <enabled>true</enabled>
-        <updatePolicy>daily</updatePolicy>
+        <updatePolicy>never</updatePolicy>
       </snapshots>
     </repository>
   </repositories>
@@ -62,7 +63,7 @@
     <dependency>
 	   <groupId>org.choco-solver</groupId>
 	   <artifactId>choco-solver</artifactId>
-	   <version>4.10.6</version>
+	   <version>${choco.version}</version>
 	</dependency>
   </dependencies>
 </project>

@@ -341,7 +341,7 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 														 .map(Map.Entry::getKey)
 														 .findAny();
 			
-			if (var.isEmpty())
+			if (!var.isPresent())
 				continue;
 			
 			var.get().setAssignedValue(intVar.getValue());			
@@ -413,7 +413,7 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 														 .map(Map.Entry::getKey)
 														 .findAny();
 			
-			if (var.isEmpty())
+			if (!var.isPresent())
 				continue;
 			
 			varSol.add(var.get());
