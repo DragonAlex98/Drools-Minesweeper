@@ -18,7 +18,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
-import java.util.Random;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -48,6 +47,7 @@ import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.model.Configuration;
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
+import it.unicam.cs.model.SquareImages;
 import it.unicam.cs.solver.Solver;
 
 public class MainFrame extends JFrame {
@@ -473,12 +473,10 @@ public class MainFrame extends JFrame {
 		DroolsUtils.getInstance().getKSession().fireAllRules();
 		this.repaint();
 		if (MainFrame.this.gameState == GameState.LOSS) {
-			Icon icon = new ImageIcon( new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/explosion.gif")).getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT));
-			JOptionPane.showMessageDialog(panel, "Bomb Uncovered, You Lose!", "Message", 1, icon);
+			JOptionPane.showMessageDialog(panel, "Bomb Uncovered, You Lose!", "Message", 1, SquareImages.getInstance().getIcons().get("loss"));
 		}
 		if (MainFrame.this.gameState == GameState.WIN) {
-			Icon icon = new ImageIcon( new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/fireworks.gif")).getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT));
-			JOptionPane.showMessageDialog(panel, "Congratulation, You Win!", "Message", 1, icon);
+			JOptionPane.showMessageDialog(panel, "Congratulation, You Win!", "Message", 1, SquareImages.getInstance().getIcons().get("win"));
 		}
 	}
 }

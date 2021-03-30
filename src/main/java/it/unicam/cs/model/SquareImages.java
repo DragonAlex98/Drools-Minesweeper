@@ -1,15 +1,20 @@
 package it.unicam.cs.model;
 
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 
 import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.enumeration.SquareType;
+import it.unicam.cs.view.MainFrame;
 import it.unicam.cs.view.MainPanel;
+import lombok.Getter;
 
 /**
  * Singleton class used to load the images representing the different Squares.
@@ -18,7 +23,10 @@ import it.unicam.cs.view.MainPanel;
 public class SquareImages {
 	private static SquareImages instance = null;
 
+	@Getter
 	private final Map<String, BufferedImage> images;
+	@Getter
+	private final Map<String, Icon> icons;
 
 	private SquareImages() {
 		this.images = new HashMap<String, BufferedImage>();
@@ -39,6 +47,9 @@ public class SquareImages {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		this.icons = new HashMap<String, Icon>();
+		this.icons.put("win", new ImageIcon(new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/fireworks.gif")).getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT)));
+		this.icons.put("loss", new ImageIcon(new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/explosion.gif")).getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT)));
 	}
 
 	public static SquareImages getInstance() {
@@ -46,10 +57,6 @@ public class SquareImages {
 			instance = new SquareImages();
 		}
 		return instance;
-	}
-	
-	public Map<String, BufferedImage> getImages() {
-		return this.images;
 	}
 
 	/**
