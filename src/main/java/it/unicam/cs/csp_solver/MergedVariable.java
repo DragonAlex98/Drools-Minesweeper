@@ -3,6 +3,9 @@ package it.unicam.cs.csp_solver;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import lombok.Getter;
+
+@Getter
 public class MergedVariable extends Variable {
 	
 	private List<Variable> variables;

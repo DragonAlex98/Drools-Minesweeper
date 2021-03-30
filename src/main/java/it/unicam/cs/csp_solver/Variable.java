@@ -25,16 +25,21 @@ public class Variable {
 	
 	private List<Boolean> currentDomain;
 	
-	private List<Integer> domain;
+	private int[] domain;
 	
 	@Setter
 	private Integer assignedValue = null;
 	
 	public Variable(Square square, Integer ... domain) {
 		this.square = square;
-		this.domain = Arrays.asList(domain);
+		this.domain = new int[domain.length];
+		
+		for (int i = 0; i < domain.length; i++) {
+			this.domain[i] = domain[i];
+		}
+		
 		this.currentDomain = new ArrayList<Boolean>();
-		this.currentDomain.addAll(this.domain.stream().map(element -> true).collect(Collectors.toList()));
+		//this.currentDomain.addAll(this.domain.stream().map(element -> true).collect(Collectors.toList()));
 	}
 
 	@Override
