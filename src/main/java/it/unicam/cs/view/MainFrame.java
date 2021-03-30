@@ -18,6 +18,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.util.Random;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -57,6 +58,7 @@ public class MainFrame extends JFrame {
 	private ButtonModel selectedDifficultyButtonModel = null;
 	private GameState gameState;
 	private Timer timer = null;
+	private Timer solveTimer = null;
 	private int elapsedSeconds = 0;
 	
 	public MainFrame(String title, Grid grid) {
@@ -188,10 +190,31 @@ public class MainFrame extends JFrame {
         // Solve complete button
         JMenuItem solveMenuItem = new JMenuItem("Solve");
         solveMenuItem.addActionListener(new ActionListener() {
-
+        	private boolean shouldContinue = true;
+        	
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				solve(false);
+				
+				ActionListener solveSingleStep = new ActionListener() {
+
+					@Override
+                    public void actionPerformed(ActionEvent ae) {
+                    	if (!shouldContinue) {
+                    		return;
+                    	}
+                        if (MainFrame.this.gameState != GameState.ONGOING) {
+                        	solveTimer.stop();
+                            System.out.println("FINITO!");
+                        } else {
+                        	shouldContinue = false;
+                        	solve(true);
+                        	MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getBounds());
+                        	shouldContinue = true;
+                        }
+                    }
+                };
+                solveTimer = new Timer(1000, solveSingleStep);
+                solveTimer.start();
 			}
 		});
         solveMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_MASK));
