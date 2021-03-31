@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import it.unicam.cs.enumeration.SquareState;
+import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Square;
 
 /**
@@ -37,8 +38,12 @@ public class VariableUtils {
 	 * @param variables
 	 * @return
 	 */
-	public List<Variable> getFrontierVariables(List<Variable> variables) {
-		List<Variable> frontierVariables = variables.stream().filter(var -> var.getSquare().getState() == SquareState.UNCOVERED && var.getAssignedValue() != 0).collect(Collectors.toList());
+	public List<Variable> getFrontierVariables(List<Variable> variables, Grid grid) {
+		List<Variable> frontierVariables = variables.stream().filter(var -> {
+			 if (var.getSquare().getState() == SquareState.UNCOVERED && grid.getNeighboursAsStream(var.getSquare().getLocation()).anyMatch(square -> square.getState() == SquareState.COVERED))
+				 return true;
+			 return false;
+		}).collect(Collectors.toList());
 		return frontierVariables;
 	}
 	
@@ -49,7 +54,7 @@ public class VariableUtils {
 	 * @param variables
 	 * @return
 	 */
-	public Variable getVariableFromSquare(Square square, List<Variable> variables) {
+	public Variable getVariableFromSquare(Square square, Set<Variable> variables) {
 		Optional<Variable> var = variables.stream().filter(variable -> variable.getSquare().equals(square)).findAny();
 		
 		if (var.isPresent())
@@ -66,7 +71,7 @@ public class VariableUtils {
 	 * @param variables
 	 * @return
 	 */
-	public List<Variable> getVariablesFromSquares(List<Square> squares, List<Variable> variables) {
+	public List<Variable> getVariablesFromSquares(List<Square> squares, Set<Variable> variables) {
 		List<Variable> foundVars = new ArrayList<Variable>();
 		
 		for (Square square : squares) {

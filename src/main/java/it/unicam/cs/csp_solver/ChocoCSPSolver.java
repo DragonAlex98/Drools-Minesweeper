@@ -37,14 +37,11 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 	private Model cspModel;
 	
 	private Map<Variable, IntVar> vars = new HashMap<Variable, IntVar>();
-	
-	private List<Variable> variables;
-	
+		
 	private IntVar[][] chocoVariables;
 	
 	public ChocoCSPSolver(Grid grid) {
 		this.grid = grid;
-		this.cspModel = new Model("Alfredino CSP");
 	}
 	
 
@@ -65,7 +62,8 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 						variable.setAssignedValue(((Number) square).getNeighbourBombsCount());
 					}
 				} else {
-					variable = new Variable(square, 0, 1);
+					variable = new Variable(square, 0, 1);					
+					//variable.setAssignedValue(0);
 				}
 				variables.add(variable);
 			}
@@ -77,12 +75,12 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 	private List<Constraint> customInitConstraints(List<Variable> variables) {
 		List<Constraint> constraints = new ArrayList<Constraint>();
 		
-		List<Variable> frontierVariables = VariableUtils.getInstance().getFrontierVariables(variables);
+		List<Variable> frontierVariables = VariableUtils.getInstance().getFrontierVariables(variables, this.grid);
 		
 		for (Variable variable : frontierVariables) {
 			List<Square> coveredNeighbors = this.grid.getNeighboursAsStream(variable.getSquare().getLocation()).filter(neighbor -> neighbor.getState() == SquareState.COVERED).collect(Collectors.toList());
 			
-			List<Variable> scope = VariableUtils.getInstance().getVariablesFromSquares(coveredNeighbors, variables);
+			List<Variable> scope = VariableUtils.getInstance().getVariablesFromSquares(coveredNeighbors, variables.stream().collect(Collectors.toSet()));
 			
 			if (scope.isEmpty())
 				continue;
@@ -252,8 +250,10 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 		
 	}
 
-	private CSP initCSP() {
-		this.variables = this.customInitVariables();
+	private void initCSP() {
+		this.cspModel = new Model("Alfredino CSP");
+		this.vars = new HashMap<>();
+		List<Variable> variables = this.customInitVariables();
 		List<Constraint> constraints = this.customInitConstraints(variables);
 		constraints = this.reduceConstraintsScope(constraints);
 		List<MergedVariable> mergedVars = this.aggregateConstraintsScopes(constraints);
@@ -267,8 +267,6 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 		Map<MergedVariable, IntVar> mergedVariables = this.insertMergedVariables(mergedVars);
 		
 		this.initMergedConstraints(mergedVariables, constraints);
-				
-		return new CSP("alfredino", variables, constraints);
 	}
 	
 	
@@ -333,10 +331,11 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 				}
 			}
 
+			/*
 			realSolution.keySet().stream().forEach(System.out::print);
 			System.out.println("\t" + checksCounter + "\t" + checkEquality);
 			System.out.println();
-			
+			*/
 			if (checksCounter == 50 && checkEquality == true )
 				break;
 			
@@ -348,28 +347,13 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 		
 		if (!realSolution.isEmpty()) {
 			realSolutionsList.addAll(realSolution.keySet().stream().collect(Collectors.toList()));
-			this.updateVariables(realSolutionsList);
 		}
 		
 		return realSolutionsList;
 	}
 	
 	private boolean isInit() {
-		return cspModel.getNbVars() == 0 ? false : true;
-	}
-
-	public void updateVariables(List<IntVar> variables) {
-		for (IntVar intVar : variables) {
-			Optional<Variable> var = this.vars.entrySet().stream()
-														 .filter(entry -> intVar.equals(entry.getValue()))
-														 .map(Map.Entry::getKey)
-														 .findAny();
-			
-			if (!var.isPresent())
-				continue;
-			
-			var.get().setAssignedValue(intVar.getValue());			
-		}
+		return (cspModel == null || cspModel.getNbVars() == 0) ? false : true;
 	}
 
 	public void initVariables(List<Variable> variables) {
@@ -383,12 +367,13 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 	
 	public static void main(String[] args) {
 		
-		Grid grid = new Grid(new Configuration(16, 30, 99));
+		Grid grid = new Grid(new Configuration(9, 9, 10));
 		grid.populateSafeGrid(new Location(0, 0));
+		/*grid.populateSafeGrid(new Location(0, 0));
 		DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "UNCOVER" ).setFocus();
 		DroolsUtils.getInstance().getKSession().insert(new Location(0, 0));
 		DroolsUtils.getInstance().getKSession().fireAllRules();
-		System.out.println(grid);
+		System.out.println(grid);*/
 		/*
 		randomEmptyLocation = grid.getGridAsStream().filter(sq -> sq.getState() == SquareState.COVERED && sq.getType() == SquareType.EMPTY).findAny().get().getLocation();
 		grid.uncoverSquare(randomEmptyLocation);
@@ -398,11 +383,11 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 		
 		ChocoCSPSolver cspSolver = new ChocoCSPSolver(grid);
 		
-		cspSolver.initCSP();
+		//cspSolver.initCSP();
 		
 		
 		
-		cspSolver.solveByStep();
+		cspSolver.solveCompleteNTimes(10);
 		
 		System.out.println("");
 	}
@@ -411,20 +396,31 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 	@Override
 	public void solveByStep() {
 		
-		if (!this.isInit())
-			this.initCSP();
+		this.initCSP();
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
 		String oldGrid = grid.toString();
 		
 		IntVar[] toCheckVariables = null;
 		Set<Variable> coveredNeighborsOfFrontierVariables = new HashSet<Variable>();
-		
-		for (Variable var : VariableUtils.getInstance().getFrontierVariables(this.vars.keySet().stream().collect(Collectors.toList()))) {
-			coveredNeighborsOfFrontierVariables.addAll(this.grid.getNeighboursAsStream(var.getSquare().getLocation())
-																.filter(neigh -> neigh.getState() == SquareState.COVERED)
-																.map(square -> VariableUtils.getInstance().getVariableFromSquare(square, variables))
-																.collect(Collectors.toSet()));
+			
+		try {
+			for (Variable var : VariableUtils.getInstance().getFrontierVariables(this.vars.keySet().stream().collect(Collectors.toList()), this.grid)) {
+				coveredNeighborsOfFrontierVariables.addAll(this.grid.getNeighboursAsStream(var.getSquare().getLocation())
+																	.filter(neigh -> neigh.getState() == SquareState.COVERED)
+																	.map(square -> VariableUtils.getInstance().getVariableFromSquare(square, this.vars.keySet()))
+																	.collect(Collectors.toSet()));
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+			System.out.println("diocane!");
 		}
+		
 		
 		toCheckVariables = new IntVar[coveredNeighborsOfFrontierVariables.size()];
 		
@@ -443,6 +439,9 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 				DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup("UNCOVER").setFocus();
 				DroolsUtils.getInstance().getKSession().insert(randomLocation);
 				DroolsUtils.getInstance().getKSession().fireAllRules();
+				SolverStatistics.getInstance().increaseTotalNumberOfRandomDecisions();
+				if (this.grid.getGameState() == GameState.LOSS)
+					SolverStatistics.getInstance().increaseNumberOfRandomDecisionsLeadingToLose();
 			}
 			
 			System.out.println(this.grid);
@@ -464,11 +463,11 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 			Variable actualVar = optVar.get();
 			
 			if (intVar.getValue() == 1) {
-				System.out.println(intVar + "IN FLAG FOCUS!");
+				//System.out.println(intVar + "IN FLAG FOCUS!");
 				DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "FLAG" ).setFocus();
 				
 			} else if (intVar.getValue() == 0) {
-				System.out.println(intVar + "IN UNCOVER FOCUS!");
+				//System.out.println(intVar + "IN UNCOVER FOCUS!");
 				DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "UNCOVER" ).setFocus();
 
 			}
@@ -487,12 +486,39 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 	public void solveComplete() {
 		while (grid.getGameState() == GameState.ONGOING) {
 			this.solveByStep();
+			System.out.println(this.grid);
 		}
 	}
 
 
 	@Override
-	public void solveCompleteNTimes() {
-		// TODO Auto-generated method stub
+	public void solveCompleteNTimes(int numberOfRuns) {
+		
+		SolverStatistics.getInstance().setNumberOfRuns(numberOfRuns);
+
+		for (int counter = 0; counter < numberOfRuns; counter++) {
+			DroolsUtils.getInstance().clear();
+			this.grid = new Grid(this.grid.getConfig());
+			grid.populateSafeGrid(new Location(0, 0));
+			DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "UNCOVER" ).setFocus();
+			DroolsUtils.getInstance().getKSession().insert(new Location(0, 0));
+			DroolsUtils.getInstance().getKSession().fireAllRules();
+			//this.initCSP();
+			
+			
+			long runStartTime = System.nanoTime();
+			this.solveComplete();
+			long runEndTime = System.nanoTime();
+			
+			if (this.grid.getGameState() == GameState.WIN) {
+				SolverStatistics.getInstance().increaseWin();
+			} else if (this.grid.getGameState() == GameState.LOSS) {
+				SolverStatistics.getInstance().increaseLose();
+			}
+			
+			SolverStatistics.getInstance().increaseTotalSolvingTime(runEndTime-runStartTime);
+		}
+		SolverStatistics.getInstance().consolidate();
+		System.out.println(SolverStatistics.getInstance());
 	}
 }

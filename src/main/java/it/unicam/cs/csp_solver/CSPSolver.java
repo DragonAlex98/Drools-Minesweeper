@@ -87,12 +87,12 @@ public class CSPSolver {
 	private List<Constraint> initConstraints(List<Variable> variables) {
 		List<Constraint> constraints = new ArrayList<Constraint>();
 		
-		List<Variable> frontierVariables = VariableUtils.getInstance().getFrontierVariables(variables);
+		List<Variable> frontierVariables = VariableUtils.getInstance().getFrontierVariables(variables, this.grid);
 		
 		for (Variable variable : frontierVariables) {
 			List<Square> coveredNeighbors = this.grid.getNeighboursAsStream(variable.getSquare().getLocation()).filter(neighbor -> neighbor.getState() == SquareState.COVERED).collect(Collectors.toList());
 			
-			List<Variable> scope = VariableUtils.getInstance().getVariablesFromSquares(coveredNeighbors, variables);
+			List<Variable> scope = VariableUtils.getInstance().getVariablesFromSquares(coveredNeighbors, variables.stream().collect(Collectors.toSet()));
 			
 			if (scope.isEmpty())
 				continue;

@@ -69,10 +69,10 @@ public class SolverStatistics {
 	
 	public void consolidate() {
 		this.averageSolvingTime = this.totalSolvingTime / this.numberOfRuns;
-		this.winPercentage = this.winNumber / this.numberOfRuns;
+		this.winPercentage = (double) this.winNumber / this.numberOfRuns;
 		this.losePercentage = 1 - this.winPercentage;
-		this.winLoseRate = this.winNumber / this.loseNumber;
+		this.winLoseRate = (double) this.winNumber / this.loseNumber;
 		this.averageNumberOfRandomDecisions = this.totalNumberOfRandomDecisions / this.numberOfRuns;
-		this.percentageOfLoseCausedByRandomDecisions = this.numberOfRandomDecisionsLeadingToLose / this.loseNumber;
+		this.percentageOfLoseCausedByRandomDecisions = (double) this.numberOfRandomDecisionsLeadingToLose / this.loseNumber;
 	}
 }

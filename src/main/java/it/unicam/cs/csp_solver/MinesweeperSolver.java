@@ -5,5 +5,5 @@ public interface MinesweeperSolver {
 	
 	public void solveComplete();
 	
-	public void solveCompleteNTimes();
+	public void solveCompleteNTimes(int numberOfRuns);
 }
