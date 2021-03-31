@@ -15,7 +15,9 @@ import org.chocosolver.solver.Solution;
 import org.chocosolver.solver.Solver;
 import org.chocosolver.solver.exception.ContradictionException;
 import org.chocosolver.solver.variables.IntVar;
+import org.drools.core.util.Drools;
 
+import it.unicam.cs.controller.DroolsUtils;
 import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.enumeration.SquareType;
 import it.unicam.cs.model.Configuration;
@@ -280,6 +282,7 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 		int checksCounter = 0;
 		
 		for (int i = 0; i < Math.pow(2, realSolution.size()) ; i++) {
+			solver.reset();
 			solutions.add(new Solution(cspModel, toCheckVariables));
 			solver.solve();
 			solutions.get(i).record();
@@ -307,19 +310,9 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 			System.out.println("\t" + checksCounter + "\t" + checkEquality);
 			System.out.println();
 			
-			if (checksCounter == 3 && checkEquality == true ) {
-				solver.reset();
-				try {
-					// update delle variabili nel model dopo la solve (solo le var nella soluzione devono essere aggiornate, ciò viene fatto dal restore)
-					solutions.get(i).restore();
-				} catch (ContradictionException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+			if (checksCounter == 15 && checkEquality == true )
 				break;
-			}
 			
-			solver.reset();
 		}
 		
 		System.out.println("Solution found!");
@@ -332,6 +325,10 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 		}
 		
 		return realSolutionsList;
+	}
+	
+	private boolean isInit() {
+		return cspModel.getNbVars() == 0 ? false : true;
 	}
 
 	public void updateVariables(List<IntVar> variables) {
@@ -360,9 +357,10 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 	public static void main(String[] args) {
 		
 		Grid grid = new Grid(new Configuration(10, 10, 20));
-		grid.populate();
-		Location randomEmptyLocation = grid.getGridAsStream().filter(sq -> sq.getState() == SquareState.COVERED && sq.getType() == SquareType.EMPTY).findAny().get().getLocation();
-		grid.uncoverSquare(randomEmptyLocation);
+		grid.populateSafeGrid(new Location(0, 0));
+		DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "UNCOVER" ).setFocus();
+		DroolsUtils.getInstance().getKSession().insert(new Location(0, 0));
+		DroolsUtils.getInstance().getKSession().fireAllRules();
 		System.out.println(grid);
 		/*
 		randomEmptyLocation = grid.getGridAsStream().filter(sq -> sq.getState() == SquareState.COVERED && sq.getType() == SquareType.EMPTY).findAny().get().getLocation();
@@ -385,7 +383,10 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 
 	@Override
 	public void solveByStep() {
-
+		
+		if (!this.isInit())
+			this.initCSP();
+		
 		IntVar[] toCheckVariables = null;
 		Set<Variable> coveredNeighborsOfFrontierVariables = new HashSet<Variable>();
 		
@@ -405,22 +406,56 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 		if (solution.isEmpty())
 			return;
 
-		List<Variable> varSol = new ArrayList<Variable>();
+		List<Variable> flagSol = new ArrayList<Variable>();
+
+		List<Variable> uncSol = new ArrayList<Variable>();
 		
 		for (IntVar intVar : solution) {
-			Optional<Variable> var = this.vars.entrySet().stream()
+			Optional<Variable> optVar = this.vars.entrySet().stream()
 														 .filter(entry -> intVar.equals(entry.getValue()))
 														 .map(Map.Entry::getKey)
 														 .findAny();
 			
-			if (!var.isPresent())
+			if (!optVar.isPresent())
 				continue;
 			
-			varSol.add(var.get());
+			Variable actualVar = optVar.get();
+			
+			if (intVar.getValue() == 1) {
+				System.out.println(intVar + "IN FLAG FOCUS!");
+				DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "FLAG" ).setFocus();
+				
+			} else if (intVar.getValue() == 0) {
+				System.out.println(intVar + "IN UNCOVER FOCUS!");
+				DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "UNCOVER" ).setFocus();
+
+			}
+
+			DroolsUtils.getInstance().getKSession().insert(actualVar.getSquare().getLocation());
+			DroolsUtils.getInstance().getKSession().fireAllRules();			
+			
+			
+		}
+/*
+		if (!flagSol.isEmpty()) {
+			DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "FLAG" ).setFocus();
+			
+			
+			flagSol.stream().forEach(element -> DroolsUtils.getInstance().getKSession().insert(element.getSquare().getLocation()));
+			DroolsUtils.getInstance().getKSession().fireAllRules();
 		}
 		
-		varSol.stream().forEach(System.out::print);
+		if (!uncSol.isEmpty()) {
+
+			DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "UNCOVER" ).setFocus();
+			
+			uncSol.stream().forEach(element -> DroolsUtils.getInstance().getKSession().insert(element.getSquare().getLocation()));
+			DroolsUtils.getInstance().getKSession().fireAllRules();
+			
+		}
+	*/	
 		
+		System.out.println(this.grid);
 		
 	}
 
