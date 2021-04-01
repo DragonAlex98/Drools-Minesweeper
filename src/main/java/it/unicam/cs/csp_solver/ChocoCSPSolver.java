@@ -367,7 +367,7 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 	
 	public static void main(String[] args) {
 		
-		Grid grid = new Grid(new Configuration(9, 9, 10));
+		Grid grid = new Grid(new Configuration(16, 30, 99));
 		grid.populateSafeGrid(new Location(0, 0));
 		/*grid.populateSafeGrid(new Location(0, 0));
 		DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "UNCOVER" ).setFocus();
@@ -387,7 +387,7 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 		
 		
 		
-		cspSolver.solveCompleteNTimes(10);
+		cspSolver.solveCompleteNTimes(50);
 		
 		System.out.println("");
 	}
@@ -418,7 +418,6 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
-			System.out.println("diocane!");
 		}
 		
 		
