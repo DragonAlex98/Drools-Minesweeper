@@ -2,6 +2,7 @@ package it.unicam.cs.view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -27,6 +28,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -224,7 +226,35 @@ public class MainFrame extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				JLabel iconLabel = new JLabel(SquareImages.getInstance().getIcons().get("loss"));
+				Color backgroundColor = new Color(255, 255, 255, 128);
+				JComponent glassPane = new JComponent() {
+					private static final long serialVersionUID = 1L;
+					
+					@Override
+					protected void paintComponent(Graphics g) {
+						g.setColor(backgroundColor);
+						g.fillRect(0, 0, getWidth(), getHeight());
+					}
+
+					public void setBackground(Color bg) {
+						super.setBackground(bg);
+						iconLabel.setBackground(bg);
+					};
+				};
+				glassPane.setOpaque(false);
+				glassPane.setBackground(backgroundColor);
+				glassPane.setLayout(new BorderLayout());
+				glassPane.add(iconLabel, BorderLayout.CENTER);
+				MainFrame.this.getRootPane().setGlassPane(glassPane);
+				glassPane.setVisible(true);
+				glassPane.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+				glassPane.requestFocusInWindow();
+
 				solve(true);
+				//TO REMOVE THE GLASS PANE, UNCOMMENT THESE TWO LINES
+				//glassPane.setCursor(null);
+				//glassPane.setVisible(false);
 			}
 		});
         solveByStepMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.CTRL_MASK));
