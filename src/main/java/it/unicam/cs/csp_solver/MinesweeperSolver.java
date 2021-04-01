@@ -1,9 +1,7 @@
 package it.unicam.cs.csp_solver;
 
+import it.unicam.cs.solver.SolveStep;
+
 public interface MinesweeperSolver {
-	public void solveByStep();
-	
-	public void solveComplete();
-	
-	public void solveCompleteNTimes(int numberOfRuns);
+	public SolveStep solveByStep();
 }

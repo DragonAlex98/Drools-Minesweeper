@@ -27,12 +27,9 @@ public class Grid {
 	@Getter
 	private Configuration config;
 	private final Random RANDOM = new Random();
-	@Getter
-	private GameState state;
 
 	public Grid(Configuration config) {
 		this.config = config;
-		this.state = GameState.ONGOING;
 	}
 
 	/**
@@ -171,12 +168,6 @@ public class Grid {
 		return GameState.ONGOING;
 	}
 
-	public void updateGameState() {
-		if (this.config.getN_BOMBS() == getGridAsStream().filter(s -> s.getState() == SquareState.COVERED || s.getState() == SquareState.FLAGGED).count()) {
-			this.state = GameState.WIN;
-		}
-	}
-
 	private Set<Location> emptySquaresSet = new HashSet<Location>();
 	private Set<Location> tempSet = new HashSet<Location>();
 
@@ -187,9 +178,8 @@ public class Grid {
 			emptySquaresSet.addAll(tempSet);
 			tempSet.clear();
 			emptySquaresSet.forEach(l -> getSquareAt(l).setState(SquareState.UNCOVERED));
-			updateGameState();
 			emptySquaresSet.forEach(l -> {
-				System.out.println(l);
+				//System.out.println(l);
 				getNeighboursAsStream(l).filter(s -> s.getState() == SquareState.COVERED).forEach(s -> {
 					if (s.getType() == SquareType.NUMBER) {
 						uncoverSquare(s.getLocation());
@@ -206,7 +196,6 @@ public class Grid {
 	public UncoverResult newUncoverEmpty(Location location) {
 		Square square = getSquareAt(location);
 		square.setState(SquareState.UNCOVERED);
-		updateGameState();
 		return UncoverResult.SAFE;
 	}
 
@@ -215,14 +204,12 @@ public class Grid {
 		square.setState(SquareState.EXPLODED);
 		getGridAsStream().filter(s -> s.getType() == SquareType.BOMB && s.getState() == SquareState.COVERED)
 				.forEach(s -> s.setState(SquareState.UNCOVERED));
-		this.state = GameState.LOSS;
 		return UncoverResult.BOMB;
 	}
 
 	public UncoverResult uncoverNumberSquare(Location location) {
 		Square square = getSquareAt(location);
 		square.setState(SquareState.UNCOVERED);
-		updateGameState();
 		return UncoverResult.SAFE;
 	}
 
@@ -242,7 +229,6 @@ public class Grid {
 			square.setState(SquareState.EXPLODED);
 			getGridAsStream().filter(s -> s.getType() == SquareType.BOMB && s.getState() == SquareState.COVERED)
 					.forEach(s -> s.setState(SquareState.UNCOVERED));
-			this.state = GameState.LOSS;
 			return UncoverResult.BOMB;
 		}
 
@@ -332,7 +318,6 @@ public class Grid {
 			}
 			s += "\r\n";
 		}
-		s += "State: " + state + "\r\n";
 		return s;
 	}
 }

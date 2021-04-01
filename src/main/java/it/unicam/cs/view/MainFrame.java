@@ -563,7 +563,7 @@ public class MainFrame extends JFrame {
     	if (isByStep) {
 			solver.solveByStep();
     	} else {
-			solver.solveComplete();
+			//solver.solveComplete();
     	}
 		this.gameState = this.grid.getGameState();
 		fireWinLossRules();
@@ -572,7 +572,7 @@ public class MainFrame extends JFrame {
     
     private void solveNTimes(int nTimes) {
     	stopTimer();
-		solver.solveCompleteNTimes(nTimes);
+		//solver.solveCompleteNTimes(nTimes);
 		this.repaint();
 	}
 
