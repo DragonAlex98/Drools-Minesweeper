@@ -50,6 +50,7 @@ public class SquareImages {
 		this.icons = new HashMap<String, Icon>();
 		this.icons.put("win", new ImageIcon(new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/fireworks.gif")).getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT)));
 		this.icons.put("loss", new ImageIcon(new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/explosion.gif")).getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT)));
+		this.icons.put("stat", new ImageIcon(new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/stat.png")).getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT)));
 	}
 
 	public static SquareImages getInstance() {

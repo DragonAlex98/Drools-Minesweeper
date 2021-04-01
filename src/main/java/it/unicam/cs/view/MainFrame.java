@@ -43,6 +43,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 import it.unicam.cs.controller.DroolsUtils;
+import it.unicam.cs.csp_solver.ChocoCSPSolver;
+import it.unicam.cs.csp_solver.MinesweeperSolver;
 import it.unicam.cs.enumeration.Difficulty;
 import it.unicam.cs.enumeration.GameState;
 import it.unicam.cs.enumeration.SquareState;
@@ -50,7 +52,6 @@ import it.unicam.cs.model.Configuration;
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
 import it.unicam.cs.model.SquareImages;
-import it.unicam.cs.solver.Solver;
 
 public class MainFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -62,6 +63,7 @@ public class MainFrame extends JFrame {
 	private Timer timer = null;
 	private Timer solveTimer = null;
 	private int elapsedSeconds = 0;
+	private MinesweeperSolver solver = null;
 	
 	public MainFrame(String title, Grid grid) {
 		super(title);
@@ -188,42 +190,12 @@ public class MainFrame extends JFrame {
 
         menuBar.add(gameMenu);
 
-        JMenu solverMenu = new JMenu("Solver");
+        JMenu solverMenu = new JMenu("SPSolver");
+        
         // Solve complete button
-        JMenuItem solveMenuItem = new JMenuItem("Solve");
+        JMenuItem solveMenuItem = new JMenuItem("SPSolve");
         solveMenuItem.addActionListener(new ActionListener() {
-        	private boolean shouldContinue = true;
         	
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				
-				ActionListener solveSingleStep = new ActionListener() {
-
-					@Override
-                    public void actionPerformed(ActionEvent ae) {
-                    	if (!shouldContinue) {
-                    		return;
-                    	}
-                        if (MainFrame.this.gameState != GameState.ONGOING) {
-                        	solveTimer.stop();
-                            System.out.println("FINITO!");
-                        } else {
-                        	shouldContinue = false;
-                        	solve(true);
-                        	MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getBounds());
-                        	shouldContinue = true;
-                        }
-                    }
-                };
-                solveTimer = new Timer(1000, solveSingleStep);
-                solveTimer.start();
-			}
-		});
-        solveMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_MASK));
-        // Solve by step button
-        JMenuItem solveByStepMenuItem = new JMenuItem("Solve by step");
-        solveByStepMenuItem.addActionListener(new ActionListener() {
-
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JLabel iconLabel = new JLabel(SquareImages.getInstance().getIcons().get("loss"));
@@ -250,18 +222,121 @@ public class MainFrame extends JFrame {
 				glassPane.setVisible(true);
 				glassPane.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 				glassPane.requestFocusInWindow();
+				ActionListener solveSingleStep = new ActionListener() {
+					private boolean solved = false;
 
+					@Override
+                    public void actionPerformed(ActionEvent ae) {
+                        if (solved) {
+                        	solveTimer.stop();
+                            System.out.println("FINITO!");
+                            glassPane.setCursor(null);
+            				glassPane.setVisible(false);
+                        } else {
+                        	solver = new ChocoCSPSolver(grid);
+            				solveNTimes(2);
+                        	MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getBounds());
+                        	solved = true;
+                        }
+                    }
+                };
+                solveTimer = new Timer(1000, solveSingleStep);
+                solveTimer.start();
+			}
+		});
+        solveMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_MASK));
+        
+        // SPSolve by step button
+        JMenuItem solveByStepMenuItem = new JMenuItem("SPSolve by step");
+        solveByStepMenuItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// init spsolver
 				solve(true);
-				//TO REMOVE THE GLASS PANE, UNCOMMENT THESE TWO LINES
-				//glassPane.setCursor(null);
-				//glassPane.setVisible(false);
 			}
 		});
         solveByStepMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.CTRL_MASK));
-        solverMenu.add(solveMenuItem);
-        solverMenu.add(solveByStepMenuItem);
         
+        // SPSolve N Times button
+        JMenuItem solveNTimesMenuItem = new JMenuItem("SPSolve N Times");
+        solveNTimesMenuItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// init spsolver
+				solveNTimes(5);
+			}
+		});
+        solveNTimesMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, KeyEvent.CTRL_MASK));
+        
+        solverMenu.add(solveMenuItem);
+        solverMenu.add(solveByStepMenuItem);       
+        solverMenu.add(solveNTimesMenuItem);
         menuBar.add(solverMenu);
+        
+        JMenu cspSolverMenu = new JMenu("CSPSolver");
+        
+        // CspSolve button
+        JMenuItem cspSolveMenuItem = new JMenuItem("CSPSolve");
+        cspSolveMenuItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				solver = new ChocoCSPSolver(grid);
+				solve(false);
+			}
+		});
+        cspSolveMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, KeyEvent.CTRL_MASK));
+        
+        // CspSolve by step button
+        JMenuItem cspSolveByStepMenuItem = new JMenuItem("CSPSolve by step");
+        cspSolveByStepMenuItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				solver = new ChocoCSPSolver(grid);
+				solve(true);
+			}
+		});
+        cspSolveByStepMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, KeyEvent.CTRL_MASK));
+        
+        // CspSolve N Times button
+        JMenuItem cspSolveNTimesMenuItem = new JMenuItem("CSPSolve N Times");
+        cspSolveNTimesMenuItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				
+				String option = JOptionPane.showInputDialog(null, "N Times (0-1000)");
+				
+				try {
+					int times = Integer.parseInt(option);
+					if (times > 0 && times < 1000) {
+						
+						solver = new ChocoCSPSolver(grid);
+						solveNTimes(times);
+	    				return;
+					} else {
+						System.out.println("Wrong configuration!");
+						JOptionPane.showMessageDialog(panel, "Out of Range!", "Error", JOptionPane.ERROR_MESSAGE);
+					}
+				} catch (NumberFormatException ex) {
+					System.out.println("Wrong format!");
+					if(option != null) {
+						JOptionPane.showMessageDialog(panel, "Wrong format!", "Error", JOptionPane.ERROR_MESSAGE);						
+					}
+				}
+				
+			}
+		});
+        cspSolveNTimesMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK));
+        
+        cspSolverMenu.add(cspSolveMenuItem);
+        cspSolverMenu.add(cspSolveByStepMenuItem);
+        cspSolverMenu.add(cspSolveNTimesMenuItem);
+        menuBar.add(cspSolverMenu);
+        
         this.setJMenuBar(menuBar);
 
         createNewGameGUI();
@@ -479,20 +554,33 @@ public class MainFrame extends JFrame {
 	
 
     /**
-     * Method to solve the Minesweeper game using a Single Point Solver and the current state of the grid.
+     * Method to solve the Minesweeper game using and the current state of the grid.
      * 
      * @param isByStep True if the Solver should perform only one resolution step, False otherwise.
      */
     private void solve(boolean isByStep) {
-    	if (this.gameState == GameState.ONGOING) {
-    		this.elapsedSeconds = 999;
-    		this.timer.stop();
+    	stopTimer();
+    	if (isByStep) {
+			solver.solveByStep();
+    	} else {
+			solver.solveComplete();
     	}
-		Solver solver = new Solver(this.grid);
-		solver.solve(isByStep);
 		this.gameState = this.grid.getGameState();
 		fireWinLossRules();
 		this.repaint();
+	}
+    
+    private void solveNTimes(int nTimes) {
+    	stopTimer();
+		solver.solveCompleteNTimes(nTimes);
+		this.repaint();
+	}
+
+	private void stopTimer() {
+		if (this.gameState == GameState.ONGOING) {
+    		this.elapsedSeconds = 999;
+    		this.timer.stop();
+    	}
 	}
 
 	/**
