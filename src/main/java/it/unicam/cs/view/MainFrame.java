@@ -475,7 +475,7 @@ public class MainFrame extends JFrame {
 						if (SwingUtilities.isRightMouseButton(e)) { // if right click, activate FLAG rules
 							DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "FLAG" ).setFocus();
 						}
-						insertAndFire(squareLocation);
+						DroolsUtils.getInstance().insertAndFire(squareLocation);
 						MainFrame.this.gameState = MainFrame.this.grid.getGameState(); // update state
 						MainFrame.this.repaint();
 						if (MainFrame.this.gameState != GameState.ONGOING) {
@@ -491,16 +491,6 @@ public class MainFrame extends JFrame {
 			}
 		});
 		this.panel = panel;
-	}
-	
-	/**
-	 * Thread-safe Method to insert an object into the working memory and fire all related rules.
-	 * 
-	 * @param object Object to insert into the working memory
-	 */
-	private synchronized void insertAndFire(Object object) {
-		DroolsUtils.getInstance().getKSession().insert(object);
-		DroolsUtils.getInstance().getKSession().fireAllRules();
 	}
 	
 	/**
@@ -587,8 +577,7 @@ public class MainFrame extends JFrame {
 	 * Method to fire the corresponding rules in case of victory or defeat.
 	 */
 	private void fireWinLossRules() {
-		DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup(this.gameState.name()).setFocus();
-		DroolsUtils.getInstance().getKSession().fireAllRules();
+		DroolsUtils.getInstance().fireGroup(this.gameState.name());
 		this.repaint();
 		if (MainFrame.this.gameState == GameState.LOSS) {
 			JOptionPane.showMessageDialog(panel, "Bomb Uncovered, You Lose!", "Message", 1, SquareImages.getInstance().getIcons().get("loss"));

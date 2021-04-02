@@ -61,4 +61,36 @@ public class DroolsUtils {
 		this.kSession.dispose();
 		this.createNewSession();
 	}
+	
+	/**
+	 * Thread-safe Method to insert an object into the working memory and fire all related rules.
+	 * 
+	 * @param object Object to insert into the working memory
+	 */
+	public synchronized void insertAndFire(Object object) {
+		this.kSession.insert(object);
+		this.kSession.fireAllRules();
+	}
+	
+	/**
+	 * Method to insert an Object into the working memory and fire the rules corresponding to its agendaGroup.
+	 * 
+	 * @param agendaGroup The agendGroup to use to fire the rules.
+	 * @param object The object to insert into the working memory.
+	 */
+	public void insertAndFire(String agendaGroup, Object object) {
+		this.kSession.getAgenda().getAgendaGroup(agendaGroup).setFocus();
+		this.kSession.insert(object);
+		this.kSession.fireAllRules();
+	}
+	
+	/**
+	 * Method to fire those rules corresponding to a certain agendaGroup.
+	 * 
+	 * @param agendaGroup The agendGroup to use to fire the rules.
+	 */
+	public void fireGroup(String agendaGroup) {
+		this.kSession.getAgenda().getAgendaGroup(agendaGroup).setFocus();
+		this.kSession.fireAllRules();
+	}
 }
