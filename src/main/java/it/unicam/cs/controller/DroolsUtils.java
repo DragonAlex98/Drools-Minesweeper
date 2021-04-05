@@ -27,15 +27,15 @@ public class DroolsUtils {
 		this.kSession.addEventListener(new RuleRuntimeEventListener() {
 
 			public void objectUpdated(ObjectUpdatedEvent arg0) {
-				System.out.println("*****Object Updated*****\n" +arg0.getObject().toString());
+				//System.out.println("*****Object Updated*****\n" +arg0.getObject().toString());
 			}
 
 			public void objectInserted(ObjectInsertedEvent arg0) {
-				System.out.println("*****Object inserted***** \n" + arg0.getObject().toString());
+				//System.out.println("*****Object inserted***** \n" + arg0.getObject().toString());
 			}
 
 			public void objectDeleted(ObjectDeletedEvent arg0) {
-				System.out.println("*****Object Retracted*****\n" + arg0.getOldObject().toString());
+				//System.out.println("*****Object Retracted*****\n" + arg0.getOldObject().toString());
 			}
 		});
 	}

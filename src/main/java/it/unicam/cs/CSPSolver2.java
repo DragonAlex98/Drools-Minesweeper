@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -76,6 +77,9 @@ public class CSPSolver2 implements MinesweeperSolver {
 		Set<Location> locationsToFlag = new HashSet<Location>();
 		Set<Location> locationsToUncover = new HashSet<Location>();
 		
+		Map<Location, Integer> locationWithMineCount = new HashMap<Location, Integer>();
+		Map<Location, Integer> locationWithoutMineCount = new HashMap<Location, Integer>();
+
 		partitions.stream().sorted((x, y) -> Integer.compare(y.size(), x.size())).forEach(p -> {
 			HashMap<Location, BoolVar> map = new HashMap<Location, BoolVar>();
 			Model model = new Model("Problemone");
@@ -118,6 +122,22 @@ public class CSPSolver2 implements MinesweeperSolver {
 				}*/
 				Solution solution = new Solution(model, map.values().toArray(new BoolVar[] {}));
 				solution.record();
+				for (BoolVar bv : solution.retrieveBoolVars()) {
+					Location location = getLocationFromString(bv.getName());
+					if (bv.getValue() == 1) {
+						if (!locationWithMineCount.containsKey(location)) {
+							locationWithMineCount.put(location, 1);
+						} else {
+							locationWithMineCount.put(location, locationWithMineCount.get(location)+1);
+						}
+					} else {
+						if (!locationWithoutMineCount.containsKey(location)) {
+							locationWithoutMineCount.put(location, 1);
+						} else {
+							locationWithoutMineCount.put(location, locationWithoutMineCount.get(location)+1);
+						}
+					}
+				}
 	
 				if (mySolution == null) {
 					// always save the first solution
@@ -127,7 +147,7 @@ public class CSPSolver2 implements MinesweeperSolver {
 					}
 				} else {
 					if (mySolution.size() == 0) {
-						// if no variables are always equal, then there is certain solution
+						// if no variables are always equal, then there is no certain solution
 						return;
 					} else {
 						for (BoolVar bv : solution.retrieveBoolVars()) {
@@ -152,7 +172,33 @@ public class CSPSolver2 implements MinesweeperSolver {
 		});
 		
 		if (locationsToFlag.isEmpty() && locationsToUncover.isEmpty()) {
-			return null;
+			if (grid.getSquareAt(new Location(0, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED) {
+				locationsToUncover.add(new Location(0, grid.getConfig().getN_COLUMNS()-1));
+			} else if (grid.getSquareAt(new Location(grid.getConfig().getN_ROWS()-1, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED) {
+				locationsToUncover.add(new Location(grid.getConfig().getN_ROWS()-1, grid.getConfig().getN_COLUMNS()-1));
+			} else if (grid.getSquareAt(new Location(grid.getConfig().getN_ROWS()-1, 0)).getState() == SquareState.COVERED) {
+				locationsToUncover.add(new Location(grid.getConfig().getN_ROWS()-1, 0));
+			} else {
+				Set<Location> keys = new HashSet<Location>();
+				keys.addAll(locationWithMineCount.keySet());
+				keys.addAll(locationWithoutMineCount.keySet());
+				Map<Location, Double> finalKeys = new HashMap<Location, Double>();
+				keys.forEach(k -> {
+					int withMineCount = locationWithMineCount.containsKey(k) ? locationWithMineCount.get(k) : 0;
+					int withoutMineCount = locationWithoutMineCount.containsKey(k) ? locationWithoutMineCount.get(k) : 0;
+					if (withMineCount == 0 && withoutMineCount == 0) {
+						finalKeys.put(k, 0.0);
+					} else {
+						finalKeys.put(k, (double)withoutMineCount / (withMineCount+withoutMineCount));
+					}
+				});
+				Optional<Map.Entry<Location, Double>> bestGuess = finalKeys.entrySet().stream().sorted((x, y) -> Double.compare(y.getValue(), x.getValue())).findFirst();
+				if (bestGuess.isPresent()) {
+					locationsToUncover.add(bestGuess.get().getKey());
+				} else {
+					return null;
+				}
+			}
 		}
 
 		return new SolveStep(new ArrayList<Location>(locationsToFlag), new ArrayList<Location>(locationsToUncover));

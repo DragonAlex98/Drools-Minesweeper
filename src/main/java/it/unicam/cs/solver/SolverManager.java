@@ -5,7 +5,6 @@ import java.util.List;
 
 import it.unicam.cs.CSPSolver2;
 import it.unicam.cs.controller.DroolsUtils;
-import it.unicam.cs.csp_solver.ChocoCSPSolver;
 import it.unicam.cs.csp_solver.MinesweeperSolver;
 import it.unicam.cs.enumeration.Difficulty;
 import it.unicam.cs.enumeration.GameState;
@@ -20,7 +19,8 @@ public class SolverManager {
 	private Grid grid;
 	
 	private SolveStep firstStep() {
-		Location randomLocation = grid.getRandomPoint();
+		//Location randomLocation = grid.getRandomPoint();
+		Location randomLocation = new Location(0, 0);
 		grid.populateSafeGrid(randomLocation);
 		DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup("UNCOVER").setFocus();
 		DroolsUtils.getInstance().getKSession().insert(randomLocation);
@@ -62,9 +62,17 @@ public class SolverManager {
 			SolveStep step = this.solveByStep();
 			if (step == null) {
 				Location randomLocation;
-				do {
-					randomLocation = grid.getRandomPoint();
-				} while(grid.getSquareAt(randomLocation).getState() != SquareState.COVERED);
+				if (grid.getSquareAt(new Location(0, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED) {
+					randomLocation = new Location(0, grid.getConfig().getN_COLUMNS()-1);
+				} else if (grid.getSquareAt(new Location(grid.getConfig().getN_ROWS()-1, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED) {
+					randomLocation = new Location(grid.getConfig().getN_ROWS()-1, grid.getConfig().getN_COLUMNS()-1);
+				} else if (grid.getSquareAt(new Location(grid.getConfig().getN_ROWS()-1, 0)).getState() == SquareState.COVERED) {
+					randomLocation = new Location(grid.getConfig().getN_ROWS()-1, 0);
+				} else {
+					do {
+						randomLocation = grid.getRandomPoint();
+					} while(grid.getSquareAt(randomLocation).getState() != SquareState.COVERED);
+				}
 				DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup("UNCOVER").setFocus();
 				DroolsUtils.getInstance().getKSession().insert(randomLocation);
 				DroolsUtils.getInstance().getKSession().fireAllRules();
@@ -92,7 +100,7 @@ public class SolverManager {
 
 	public static void main(String[] args) throws Exception {
 		Grid grid = new Grid(Difficulty.BEGINNER.getConfiguration());
-		SolverManager manager = new SolverManager(new SinglePointSolver(grid), grid);
-		manager.completeNTimes(1000);
+		SolverManager manager = new SolverManager(new CSPSolver2(grid), grid);
+		manager.completeNTimes(10000);
 	}
 }

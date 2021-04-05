@@ -119,7 +119,7 @@ public class Grid {
 		getGridAsStream().forEach(s -> DroolsUtils.getInstance().getKSession().insert(s));
 		DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup("register neighbor").setFocus();
 		DroolsUtils.getInstance().getKSession().fireAllRules();
-		System.out.println(toString());
+		//System.out.println(toString());
 	}
 
 	/**

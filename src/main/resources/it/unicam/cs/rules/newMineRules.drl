@@ -40,7 +40,7 @@ rule "Print neighbor"
         $neig : ArrayList( )
         	   from collect( Neighbor( ) )
     then
-        System.out.println($neig);
+        //System.out.println($neig);
 end
 
 
@@ -52,7 +52,7 @@ when
 then
     insert( new Neighbor( $square, $north ) );
     insert( new Neighbor( $north, $square ) );
-    System.out.println("North neighobr");
+    //System.out.println("North neighobr");
 end
 
 rule "register north east"
@@ -63,7 +63,7 @@ when
 then
     insert( new Neighbor( $square, $northEast ) );
     insert( new Neighbor( $northEast, $square ) );
-    System.out.println("North East neighobr");
+    //System.out.println("North East neighobr");
 end
 
 rule "register north west"
@@ -74,7 +74,7 @@ when
 then
     insert( new Neighbor( $square, $northWest ) );
     insert( new Neighbor( $northWest, $square ) );
-    System.out.println("North West neighobr");
+    //System.out.println("North West neighobr");
 end
 
 rule "register west"
@@ -85,7 +85,7 @@ when
 then
     insert( new Neighbor( $square, $west ) );
     insert( new Neighbor( $west, $square ) );
-    System.out.println("West neighobr");
+    //System.out.println("West neighobr");
 end
 
 rule "Uncover Empty"
@@ -97,7 +97,7 @@ rule "Uncover Empty"
     	$theSquare: Square(location == $loc, type == SquareType.EMPTY, state == SquareState.COVERED)
     	Neighbor(square == $theSquare, $neighbor : neighbor)
 	then
-		System.out.println("Empty Square Rule Fired! Evaluating " + $loc);
+		//System.out.println("Empty Square Rule Fired! Evaluating " + $loc);
     	modify ($theSquare) {setState(SquareState.UNCOVERED)}
 end
 
@@ -110,7 +110,7 @@ rule "Uncover Empty neigh"
     	Neighbor(square == $theSquare, $neighbor : neighbor)
     	Square(location == $neighbor.getLocation(), state == SquareState.COVERED )
 	then
-		System.out.println("Empty Square Rule Fired! Inserting " + $neighbor.getLocation());
+		//System.out.println("Empty Square Rule Fired! Inserting " + $neighbor.getLocation());
     	insert(new Location($neighbor.getLocation().getRow(), $neighbor.getLocation().getColumn()));
 end
 
@@ -121,7 +121,7 @@ rule "Uncover Bomb"
 		$loc : Location( )
 		$theSquare: Square(location == $loc, type == SquareType.BOMB, state == SquareState.COVERED)
 	then
-		System.out.println("Bomb Square Rule Fired!");
+		//System.out.println("Bomb Square Rule Fired!");
 		drools.getKnowledgeRuntime().getAgenda().getAgendaGroup("UNCOVER").clear();
 		modify ($theSquare) {setState(SquareState.EXPLODED)}
 		retract($loc);
@@ -135,7 +135,7 @@ rule "Uncover Number"
 		$loc : Location( )
 		$theSquare: Square(location == $loc, type == SquareType.NUMBER, state == SquareState.COVERED)
 	then
-		System.out.println("Number Square Rule Fired!");
+		//System.out.println("Number Square Rule Fired!");
 		modify ($theSquare) {setState(SquareState.UNCOVERED)}
 		retract($loc);
 end
@@ -145,7 +145,7 @@ rule "Clear"
 	when
 		$loc : Location( )
 	then
-		System.out.println("Clear Location Rule Fired!");
+		//System.out.println("Clear Location Rule Fired!");
 		retract($loc);
 end
 
@@ -156,7 +156,7 @@ rule "Flag"
 		$loc : Location( )
 		$theSquare: Square(location == $loc, state == SquareState.COVERED)
 	then
-		System.out.println("Flag Square Rule Fired!");
+		//System.out.println("Flag Square Rule Fired!");
 		modify ($theSquare) {setState(SquareState.FLAGGED)}
 		retract($loc);
 end
@@ -168,7 +168,7 @@ rule "Unflag"
 		$loc : Location( )
 		$theSquare: Square(location == $loc, state == SquareState.FLAGGED)
 	then
-		System.out.println("Unflag Square Rule Fired!");
+		//System.out.println("Unflag Square Rule Fired!");
 		modify ($theSquare) {setState(SquareState.COVERED)}
 		retract($loc);
 end
@@ -187,9 +187,9 @@ rule "Chord"
 		eval($theSquare.getNeighbourBombsCount() == $countFlaggedSquares)
 		$coveredSquares : ArrayList( size() > 0 ) from collect(Square(state == SquareState.COVERED) from $squares)
 	then
-		System.out.println("Chord Square Rule Fired! " + $squares.size());
-		System.out.println("Chord Square Rule Fired! " + $countFlaggedSquares);
-		System.out.println("Chord Square Rule Fired! " + $coveredSquares.size());
+		//System.out.println("Chord Square Rule Fired! " + $squares.size());
+		//System.out.println("Chord Square Rule Fired! " + $countFlaggedSquares);
+		//System.out.println("Chord Square Rule Fired! " + $coveredSquares.size());
 		$coveredSquares.forEach(s -> insert(((Square)s).getLocation()));
 		drools.getKnowledgeRuntime().getAgenda().getAgendaGroup("UNCOVER").setFocus();
 end
@@ -199,7 +199,7 @@ rule "LOSS"
 	when
 		$square : Square(state == SquareState.COVERED, type == SquareType.BOMB)
 	then
-		System.out.println("Loss Rule Fired!");
+		//System.out.println("Loss Rule Fired!");
 		modify ($square) {setState(SquareState.UNCOVERED)}
 end
 
@@ -208,6 +208,6 @@ rule "WIN"
 	when
 		$square : Square(state == SquareState.COVERED)
 	then
-		System.out.println("Win Rule Fired!");
+		//System.out.println("Win Rule Fired!");
 		modify ($square) {setState(SquareState.FLAGGED)}
 end
