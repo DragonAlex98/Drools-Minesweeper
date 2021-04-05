@@ -19,11 +19,12 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class SinglePointSolver implements MinesweeperSolver {
 
-	/**	Grid of used by the Solver to solve the game**/
+	/**	Grid used by the Solver to solve the game**/
 	private Grid grid;
 
 	/**
-	 * Method to check all mine neighbors (AMN) and possibly flag all of them.
+	 * Method to check all mine neighbors (AMN).
+	 * @return List of locations to flag.
 	 */
 	private List<Location> allMineNeighbors() {
 		return grid.getGridAsStream().filter(s -> s.getState() == SquareState.UNCOVERED && s.getType() == SquareType.NUMBER).flatMap(s -> {
@@ -37,7 +38,8 @@ public class SinglePointSolver implements MinesweeperSolver {
 	}
 	
 	/**
-	 * Method to check all free neighbors (AFN) and possibly uncover all of them.
+	 * Method to check all free neighbors (AFN).
+	 * @return List of locations to uncover.
 	 */
 	private List<Location> allFreeNeighbors() {
 		return grid.getGridAsStream().filter(s -> s.getState() == SquareState.UNCOVERED && s.getType() == SquareType.NUMBER).flatMap(s -> {
