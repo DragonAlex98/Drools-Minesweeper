@@ -42,9 +42,8 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
+import it.unicam.cs.CSPSolver2;
 import it.unicam.cs.controller.DroolsUtils;
-import it.unicam.cs.csp_solver.ChocoCSPSolver;
-import it.unicam.cs.csp_solver.MinesweeperSolver;
 import it.unicam.cs.enumeration.Difficulty;
 import it.unicam.cs.enumeration.GameState;
 import it.unicam.cs.enumeration.SquareState;
@@ -52,6 +51,8 @@ import it.unicam.cs.model.Configuration;
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
 import it.unicam.cs.model.SquareImages;
+import it.unicam.cs.solver.SinglePointSolver;
+import it.unicam.cs.solver.SolverManager;
 
 public class MainFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -63,14 +64,14 @@ public class MainFrame extends JFrame {
 	private Timer timer = null;
 	private Timer solveTimer = null;
 	private int elapsedSeconds = 0;
-	private MinesweeperSolver solver = null;
+	private SolverManager solverManager = null;
 	
+	@SuppressWarnings("deprecation")
 	public MainFrame(String title, Grid grid) {
 		super(title);
 
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setResizable(true);
-		this.setLocationRelativeTo(null);
 		try {
 			this.setIconImage(ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/bomb.png")));
 		} catch (IOException e1) {
@@ -192,13 +193,20 @@ public class MainFrame extends JFrame {
 
         JMenu solverMenu = new JMenu("SPSolver");
         
-        // Solve complete button
+        // SPSolve complete button
         JMenuItem solveMenuItem = new JMenuItem("SPSolve");
         solveMenuItem.addActionListener(new ActionListener() {
         	
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JLabel iconLabel = new JLabel(SquareImages.getInstance().getIcons().get("loss"));
+				if (MainFrame.this.gameState != GameState.ONGOING) {
+					return; // exit if WIN or LOSS
+				}
+				solverManager = new SolverManager(new SinglePointSolver(MainFrame.this.grid), MainFrame.this.grid);
+				solve(false);
+				
+				// TODO put this into N times button action performed 
+				/*JLabel iconLabel = new JLabel(SquareImages.getInstance().getIcons().get("loss"));
 				Color backgroundColor = new Color(255, 255, 255, 128);
 				JComponent glassPane = new JComponent() {
 					private static final long serialVersionUID = 1L;
@@ -233,7 +241,7 @@ public class MainFrame extends JFrame {
                             glassPane.setCursor(null);
             				glassPane.setVisible(false);
                         } else {
-                        	solver = new ChocoCSPSolver(grid);
+                        	solverManager = new SolverManager(new SinglePointSolver(grid), grid);
             				solveNTimes(2);
                         	MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getBounds());
                         	solved = true;
@@ -242,6 +250,7 @@ public class MainFrame extends JFrame {
                 };
                 solveTimer = new Timer(1000, solveSingleStep);
                 solveTimer.start();
+                */
 			}
 		});
         solveMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_MASK));
@@ -252,7 +261,10 @@ public class MainFrame extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// init spsolver
+				if (MainFrame.this.gameState != GameState.ONGOING) {
+					return; // exit if WIN or LOSS
+				}
+				solverManager = new SolverManager(new SinglePointSolver(MainFrame.this.grid), MainFrame.this.grid);
 				solve(true);
 			}
 		});
@@ -260,12 +272,28 @@ public class MainFrame extends JFrame {
         
         // SPSolve N Times button
         JMenuItem solveNTimesMenuItem = new JMenuItem("SPSolve N Times");
-        solveNTimesMenuItem.addActionListener(new ActionListener() {
+		solveNTimesMenuItem.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// init spsolver
-				solveNTimes(5);
+				String option = JOptionPane.showInputDialog(null, "N Times (0-1000)");
+
+				try {
+					int times = Integer.parseInt(option);
+					if (times > 0 && times < 1000) {
+						solverManager = new SolverManager(new SinglePointSolver(MainFrame.this.grid), MainFrame.this.grid);
+						solveNTimes(times);
+						return;
+					} else {
+						System.out.println("Wrong configuration!");
+						JOptionPane.showMessageDialog(panel, "Out of Range!", "Error", JOptionPane.ERROR_MESSAGE);
+					}
+				} catch (NumberFormatException ex) {
+					System.out.println("Wrong format!");
+					if (option != null) {
+						JOptionPane.showMessageDialog(panel, "Wrong format!", "Error", JOptionPane.ERROR_MESSAGE);
+					}
+				}
 			}
 		});
         solveNTimesMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, KeyEvent.CTRL_MASK));
@@ -283,7 +311,10 @@ public class MainFrame extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				solver = new ChocoCSPSolver(grid);
+				if (MainFrame.this.gameState != GameState.ONGOING) {
+					return; // exit if WIN or LOSS
+				}
+				solverManager = new SolverManager(new CSPSolver2(MainFrame.this.grid), MainFrame.this.grid);
 				solve(false);
 			}
 		});
@@ -295,7 +326,10 @@ public class MainFrame extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				solver = new ChocoCSPSolver(grid);
+				if (MainFrame.this.gameState != GameState.ONGOING) {
+					return; // exit if WIN or LOSS
+				}
+				solverManager = new SolverManager(new CSPSolver2(MainFrame.this.grid), MainFrame.this.grid);
 				solve(true);
 			}
 		});
@@ -307,49 +341,46 @@ public class MainFrame extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				
 				String option = JOptionPane.showInputDialog(null, "N Times (0-1000)");
-				
 				try {
 					int times = Integer.parseInt(option);
 					if (times > 0 && times < 1000) {
-						
-						solver = new ChocoCSPSolver(grid);
+						solverManager = new SolverManager(new CSPSolver2(MainFrame.this.grid), MainFrame.this.grid);
 						solveNTimes(times);
-	    				return;
+						return;
 					} else {
 						System.out.println("Wrong configuration!");
 						JOptionPane.showMessageDialog(panel, "Out of Range!", "Error", JOptionPane.ERROR_MESSAGE);
 					}
 				} catch (NumberFormatException ex) {
 					System.out.println("Wrong format!");
-					if(option != null) {
-						JOptionPane.showMessageDialog(panel, "Wrong format!", "Error", JOptionPane.ERROR_MESSAGE);						
+					if (option != null) {
+						JOptionPane.showMessageDialog(panel, "Wrong format!", "Error", JOptionPane.ERROR_MESSAGE);
 					}
 				}
-				
 			}
 		});
-        cspSolveNTimesMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK));
-        
-        cspSolverMenu.add(cspSolveMenuItem);
-        cspSolverMenu.add(cspSolveByStepMenuItem);
-        cspSolverMenu.add(cspSolveNTimesMenuItem);
-        menuBar.add(cspSolverMenu);
-        
-        this.setJMenuBar(menuBar);
+		cspSolveNTimesMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK));
 
-        createNewGameGUI();
-        newGame(grid);
-        
-        JPanel topPanel = new JPanel();
-        topPanel.setLayout(new GridBagLayout());
-        GridBagConstraints c = new GridBagConstraints();
-        c.fill = GridBagConstraints.HORIZONTAL;
+		cspSolverMenu.add(cspSolveMenuItem);
+		cspSolverMenu.add(cspSolveByStepMenuItem);
+		cspSolverMenu.add(cspSolveNTimesMenuItem);
+		menuBar.add(cspSolverMenu);
+
+		this.setJMenuBar(menuBar);
+
+		createNewGameGUI();
+		newGame(grid);
+
+		JPanel topPanel = new JPanel();
+		topPanel.setLayout(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
+		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 0.5;
 		c.gridx = 0;
 		c.gridy = 0;
         
+		// Bomb count
         JLabel bombCountLabel = new JLabel() {
 			private static final long serialVersionUID = 1L;
 
@@ -363,17 +394,18 @@ public class MainFrame extends JFrame {
 				super.paintComponent(g);
         	}
         };
-        bombCountLabel.setFont(customFont);
-        bombCountLabel.setForeground(Color.RED);
+		bombCountLabel.setFont(customFont);
+		bombCountLabel.setForeground(Color.RED);
 		bombCountLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
-        topPanel.add(bombCountLabel, c);
+		topPanel.add(bombCountLabel, c);
 
-        c.fill = GridBagConstraints.NONE;
+		c.fill = GridBagConstraints.NONE;
 		c.weightx = 0.5;
 		c.weighty = 1;
 		c.gridx = 1;
 		c.gridy = 0;
 
+		// Smile Button
         Icon smileIcon = new ImageIcon(new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/smile.png")).getImage().getScaledInstance(32, 32, Image.SCALE_DEFAULT));
         JButton smileButton = new JButton(smileIcon);
         smileButton.addActionListener(new ActionListener() {
@@ -385,16 +417,17 @@ public class MainFrame extends JFrame {
 				newGame(grid);
 			}
 		});
-        smileButton.setMinimumSize(new Dimension(smileIcon.getIconWidth(), smileIcon.getIconHeight()));
+		smileButton.setMinimumSize(new Dimension(smileIcon.getIconWidth(), smileIcon.getIconHeight()));
 		smileButton.setPreferredSize(new Dimension(smileIcon.getIconWidth(), smileIcon.getIconHeight()));
-        topPanel.add(smileButton, c);
-        
-        c.fill = GridBagConstraints.HORIZONTAL;
+		topPanel.add(smileButton, c);
+
+		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 0.5;
 		c.weighty = 0;
 		c.gridx = 2;
 		c.gridy = 0;
 
+		// Timer
 		JLabel timerLabel = new JLabel() {
 			private static final long serialVersionUID = 1L;
 
@@ -402,15 +435,15 @@ public class MainFrame extends JFrame {
 			protected void paintComponent(Graphics g) {
 				setText(String.format("%03d", elapsedSeconds));
 				super.paintComponent(g);
-        	}
-        };
-        timerLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        timerLabel.setFont(customFont);
-        timerLabel.setForeground(Color.RED);
-        timerLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
-        
-        timer = new Timer(1000, new ActionListener() {
-			
+			}
+		};
+		timerLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+		timerLabel.setFont(customFont);
+		timerLabel.setForeground(Color.RED);
+		timerLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
+
+		timer = new Timer(1000, new ActionListener() {
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (elapsedSeconds < 999) {
@@ -421,14 +454,16 @@ public class MainFrame extends JFrame {
 			}
 		});
 		timer.setRepeats(true);
-        
-        topPanel.add(timerLabel, c);
+
+		topPanel.add(timerLabel, c);
         
         this.getContentPane().setLayout(new BorderLayout());
         this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
 		this.getContentPane().add(this.panel, BorderLayout.CENTER);
-		this.setVisible(true);
 		this.pack();
+		this.setLocationRelativeTo(null);
+		this.setVisible(true);
+
 	}
 	
 	/**
@@ -439,7 +474,7 @@ public class MainFrame extends JFrame {
 		panel.addMouseListener(new MouseAdapter() {
 			private boolean mousePressed = false;
 			private Location squareLocation = null;
-			
+
 			@Override
 			public void mousePressed(MouseEvent e) {
 				if (MainFrame.this.gameState != GameState.ONGOING) {
@@ -515,7 +550,7 @@ public class MainFrame extends JFrame {
 	 * @return The preferred Dimension.
 	 */
 	private Dimension determinePreferredDimension() {
-		Dimension preferredDimension = new Dimension(grid.getConfig().getN_COLUMNS()*32, grid.getConfig().getN_ROWS()*32);
+		Dimension preferredDimension = new Dimension(grid.getConfig().getN_COLUMNS() * 32, grid.getConfig().getN_ROWS() * 32);
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		if (preferredDimension.width > screenSize.width || preferredDimension.height > screenSize.height) {
 			preferredDimension = new Dimension(screenSize.width, screenSize.height);
@@ -529,48 +564,65 @@ public class MainFrame extends JFrame {
 	 * @param grid The grid used for the game.
 	 */
 	private void newGame(Grid grid) {
-	    DroolsUtils.getInstance().clear();
-	    if (timer != null) {
-	    	timer.stop();
-	    }
-	    this.elapsedSeconds = 0;
+		DroolsUtils.getInstance().clear();
+		if (timer != null) {
+			timer.stop();
+		}
+		this.elapsedSeconds = 0;
 		this.grid = grid;
 		this.gameState = GameState.ONGOING;
 		this.panel.setPreferredSize(determinePreferredDimension());
 		this.pack();
+		//this.setLocationRelativeTo(null);
 		this.panel.init(grid);
 		this.repaint();
-	}
-	
+	}	
 
-    /**
-     * Method to solve the Minesweeper game using and the current state of the grid.
-     * 
-     * @param isByStep True if the Solver should perform only one resolution step, False otherwise.
-     */
-    private void solve(boolean isByStep) {
-    	stopTimer();
-    	if (isByStep) {
-			solver.solveByStep();
-    	} else {
-			//solver.solveComplete();
-    	}
+	/**
+	 * Method to solve the Minesweeper game using the SolverManager and the current
+	 * state of the grid.
+	 * 
+	 * @param isByStep True if the Solver should perform only one resolution step,
+	 *                 False otherwise.
+	 */
+	private void solve(boolean isByStep) {
+		stopTimer();
+		if (isByStep) {
+			solverManager.solveByStep();
+		} else {
+			solverManager.complete();
+			;
+		}
 		this.gameState = this.grid.getGameState();
 		fireWinLossRules();
 		this.repaint();
 	}
     
-    private void solveNTimes(int nTimes) {
-    	stopTimer();
-		//solver.solveCompleteNTimes(nTimes);
+	/**
+	 * Method to solve the Minesweeper game many times (nTimes parameter) using the
+	 * SolverManager and the current state of the grid.
+	 * 
+	 * @param isByStep True if the Solver should perform only one resolution step,
+	 *                 False otherwise.
+	 */
+	private void solveNTimes(int nTimes) {
+		stopTimer();
+		try {
+			solverManager.completeNTimes(nTimes);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		this.repaint();
 	}
 
+	/**
+	 * Method to stop the timer
+	 */
 	private void stopTimer() {
 		if (this.gameState == GameState.ONGOING) {
-    		this.elapsedSeconds = 999;
-    		this.timer.stop();
-    	}
+			this.elapsedSeconds = 999;
+			this.timer.stop();
+		}
 	}
 
 	/**
@@ -580,7 +632,7 @@ public class MainFrame extends JFrame {
 		DroolsUtils.getInstance().fireGroup(this.gameState.name());
 		this.repaint();
 		if (MainFrame.this.gameState == GameState.LOSS) {
-			JOptionPane.showMessageDialog(panel, "Bomb Uncovered, You Lose!", "Message", 1, SquareImages.getInstance().getIcons().get("loss"));
+			JOptionPane.showMessageDialog(panel, "Bomb Uncovered, You Lose!", "Message", 1,	SquareImages.getInstance().getIcons().get("loss"));
 		}
 		if (MainFrame.this.gameState == GameState.WIN) {
 			JOptionPane.showMessageDialog(panel, "Congratulation, You Win!", "Message", 1, SquareImages.getInstance().getIcons().get("win"));

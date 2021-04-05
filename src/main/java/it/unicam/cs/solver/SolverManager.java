@@ -1,8 +1,5 @@
 package it.unicam.cs.solver;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import it.unicam.cs.CSPSolver2;
 import it.unicam.cs.controller.DroolsUtils;
 import it.unicam.cs.csp_solver.MinesweeperSolver;
@@ -13,73 +10,73 @@ import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
 import lombok.AllArgsConstructor;
 
+/**
+ * Class used to manage the various steps that a specific Solver has to perform,
+ * abstracting from the type of the Solver itself.
+ *
+ */
 @AllArgsConstructor
 public class SolverManager {
+	/** The Solver used to solve the game **/
 	private MinesweeperSolver solver;
+	/** The grid used by the Solver **/
 	private Grid grid;
-	
-	private SolveStep firstStep() {
-		//Location randomLocation = grid.getRandomPoint();
-		Location randomLocation = new Location(0, 0);
-		grid.populateSafeGrid(randomLocation);
-		DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup("UNCOVER").setFocus();
-		DroolsUtils.getInstance().getKSession().insert(randomLocation);
-		DroolsUtils.getInstance().getKSession().fireAllRules();
-		List<Location> uncoveredLocation = new ArrayList<Location>();
-		uncoveredLocation.add(randomLocation);
-		return new SolveStep(new ArrayList<Location>(), uncoveredLocation);
+
+	/**
+	 * Method used to populate the grid and to uncover the first top-left Square.
+	 * 
+	 */
+	private void firstStep() {
+		Location location = new Location(0, 0);
+		grid.populateSafeGrid(location);
+		DroolsUtils.getInstance().insertAndFire("UNCOVER", location);
 	}
 	
-	public SolveStep solveByStep() {
+	/**
+	 * Method used to perform a single resolution step according to the current
+	 * state of the grid.
+	 * 
+	 */
+	public void solveByStep() {
 		if (!grid.isPopulated()) {
-			return this.firstStep();
+			this.firstStep();
+			return;
 		}
 
 		SolveStep step = solver.solveByStep();
 		if (step == null) {
-			return null;
+			Location location = getCornerOrRandomLocation();
+			DroolsUtils.getInstance().insertAndFire("UNCOVER", location);
+			return;
 		}
 
 		step.getLocationsToFlag().forEach(f -> {
-			DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup("FLAG").setFocus();
-			DroolsUtils.getInstance().getKSession().insert(f);
-			DroolsUtils.getInstance().getKSession().fireAllRules();
+			DroolsUtils.getInstance().insertAndFire("FLAG", f);
 		});
 		step.getLocationsToUncover().forEach(f -> {
-			DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup("UNCOVER").setFocus();
-			DroolsUtils.getInstance().getKSession().insert(f);
-			DroolsUtils.getInstance().getKSession().fireAllRules();
+			DroolsUtils.getInstance().insertAndFire("UNCOVER", f);
 		});
-		return step;
 	}
 	
+	/**
+	 * Method used to fully solve the Minesweeper game, according to the current
+	 * state of the grid.
+	 */
 	public void complete() {
 		if (!grid.isPopulated()) {
-			this.firstStep();
+			firstStep();
 		}
-
+		
 		while(grid.getGameState() == GameState.ONGOING) {
-			SolveStep step = this.solveByStep();
-			if (step == null) {
-				Location randomLocation;
-				if (grid.getSquareAt(new Location(0, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED) {
-					randomLocation = new Location(0, grid.getConfig().getN_COLUMNS()-1);
-				} else if (grid.getSquareAt(new Location(grid.getConfig().getN_ROWS()-1, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED) {
-					randomLocation = new Location(grid.getConfig().getN_ROWS()-1, grid.getConfig().getN_COLUMNS()-1);
-				} else if (grid.getSquareAt(new Location(grid.getConfig().getN_ROWS()-1, 0)).getState() == SquareState.COVERED) {
-					randomLocation = new Location(grid.getConfig().getN_ROWS()-1, 0);
-				} else {
-					do {
-						randomLocation = grid.getRandomPoint();
-					} while(grid.getSquareAt(randomLocation).getState() != SquareState.COVERED);
-				}
-				DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup("UNCOVER").setFocus();
-				DroolsUtils.getInstance().getKSession().insert(randomLocation);
-				DroolsUtils.getInstance().getKSession().fireAllRules();
-			}
+			solveByStep();		
 		}
 	}
 
+	/**
+	 * Method used to run and solve different game many times (n).
+	 * 
+	 * @param n Number of times to run and solve a game.
+	 */
 	public void completeNTimes(int n) throws Exception {
 		int win = 0;
 		int lose = 0;
@@ -93,13 +90,35 @@ public class SolverManager {
 			} else if (grid.getGameState() == GameState.LOSS) {
 				lose++;
 			}
-			System.out.println("Win: " + win + ", Lose: " + lose + ", Win Rate: " + (double)win/(win+lose)*100f);
+			System.out.println("Win: " + win + ", Lose: " + lose + ", Win Rate: " + (double) win / (win + lose) * 100f);
 		}
-		System.out.println("Win: " + win + ", Lose: " + lose + ", Win Rate: " + (double)win/(win+lose)*100f);
+		System.out.println("Win: " + win + ", Lose: " + lose + ", Win Rate: " + (double) win / (win + lose) * 100f);
+	}
+
+	/**
+	 * Method to get the location corresponding to a covered Square, taken from one
+	 * of the corners, if available, or in a random way.
+	 * 
+	 * @return The location corresponding to a covered Square.
+	 */
+	private Location getCornerOrRandomLocation() {
+		Location location;
+		if (grid.getSquareAt(new Location(0, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED) {
+			location = new Location(0, grid.getConfig().getN_COLUMNS()-1);
+		} else if (grid.getSquareAt(new Location(grid.getConfig().getN_ROWS()-1, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED) {
+			location = new Location(grid.getConfig().getN_ROWS()-1, grid.getConfig().getN_COLUMNS()-1);
+		} else if (grid.getSquareAt(new Location(grid.getConfig().getN_ROWS()-1, 0)).getState() == SquareState.COVERED) {
+			location = new Location(grid.getConfig().getN_ROWS()-1, 0);
+		} else {
+			do {
+				location = grid.getRandomPoint();
+			} while(grid.getSquareAt(location).getState() != SquareState.COVERED);
+		}
+		return location;
 	}
 
 	public static void main(String[] args) throws Exception {
-		Grid grid = new Grid(Difficulty.BEGINNER.getConfiguration());
+		Grid grid = new Grid(Difficulty.EXPERT.getConfiguration());
 		SolverManager manager = new SolverManager(new CSPSolver2(grid), grid);
 		manager.completeNTimes(10000);
 	}
