@@ -1,11 +1,11 @@
 package it.unicam.cs.solver;
 
-import it.unicam.cs.CSPSolver2;
 import it.unicam.cs.controller.DroolsUtils;
 import it.unicam.cs.csp_solver.MinesweeperSolver;
 import it.unicam.cs.csp_solver.SolverStatistics;
 import it.unicam.cs.enumeration.Difficulty;
 import it.unicam.cs.enumeration.GameState;
+import it.unicam.cs.enumeration.SolveStrategy;
 import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
@@ -25,8 +25,12 @@ public class SolverManager {
 	/** Whether last SolveStep was chosen randomly **/
 	private boolean isLastStepRandom;
 	
-	public SolverManager(MinesweeperSolver solver, Grid grid) {
-		this.solver = solver;
+	public SolverManager(SolveStrategy strategy, Grid grid) {
+		try {
+			this.solver = strategy.getSolverClass().getConstructor(Grid.class).newInstance(grid);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		this.grid = grid;
 	}
 
@@ -139,7 +143,9 @@ public class SolverManager {
 	 */
 	private Location getCornerOrRandomLocation() {
 		Location location;
-		if (grid.getSquareAt(new Location(0, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED) {
+		if (grid.getSquareAt(new Location(0, 0)).getState() == SquareState.COVERED) {
+			location = new Location(0, 0);
+		} else if (grid.getSquareAt(new Location(0, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED) {
 			location = new Location(0, grid.getConfig().getN_COLUMNS()-1);
 		} else if (grid.getSquareAt(new Location(grid.getConfig().getN_ROWS()-1, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED) {
 			location = new Location(grid.getConfig().getN_ROWS()-1, grid.getConfig().getN_COLUMNS()-1);
@@ -154,8 +160,8 @@ public class SolverManager {
 	}
 
 	public static void main(String[] args) throws Exception {
-		Grid grid = new Grid(Difficulty.BEGINNER.getConfiguration());
-		SolverManager manager = new SolverManager(new CSPSolver2(grid), grid);
+		Grid grid = new Grid(Difficulty.EXPERT.getConfiguration());
+		SolverManager manager = new SolverManager(SolveStrategy.CSP, grid);
 		manager.completeNTimes(1000);
 	}
 }

@@ -40,16 +40,15 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
-import it.unicam.cs.CSPSolver2;
 import it.unicam.cs.controller.DroolsUtils;
 import it.unicam.cs.enumeration.Difficulty;
 import it.unicam.cs.enumeration.GameState;
+import it.unicam.cs.enumeration.SolveStrategy;
 import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.model.Configuration;
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
 import it.unicam.cs.model.SquareImages;
-import it.unicam.cs.solver.SinglePointSolver;
 import it.unicam.cs.solver.SolverManager;
 
 public class MainFrame extends JFrame {
@@ -190,195 +189,132 @@ public class MainFrame extends JFrame {
         buttonGroup.add(customDifficultyGameMenuItem);
 
         menuBar.add(gameMenu);
-
-        JMenu solverMenu = new JMenu("SPSolver");
         
-        // SPSolve by step button
-        JMenuItem solveByStepMenuItem = new JMenuItem("SPSolve by step");
-        solveByStepMenuItem.addActionListener(new ActionListener() {
+        for (SolveStrategy strategy : SolveStrategy.values()) {
+        	JMenu solverMenu = new JMenu(strategy.getName());
+        	// Solve by step button
+        	JMenuItem solveByStepMenuItem = new JMenuItem(strategy.getName() + " by step");
+            solveByStepMenuItem.addActionListener(new ActionListener() {
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (MainFrame.this.gameState != GameState.ONGOING) {
-					return; // exit if WIN or LOSS
-				}
-				solverManager = new SolverManager(new SinglePointSolver(MainFrame.this.grid), MainFrame.this.grid);
-				stopTimer();
-				solverManager.solveByStep();
-				MainFrame.this.gameState = MainFrame.this.grid.getGameState();
-				MainFrame.this.repaint();
-				fireWinLossRules();
-			}
-		});
-        solveByStepMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.CTRL_MASK));
-        
-        // SPSolve complete button
-        JMenuItem solveMenuItem = new JMenuItem("SPSolve");
-        solveMenuItem.addActionListener(new ActionListener() {
-        	
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (MainFrame.this.gameState != GameState.ONGOING) {
-					return; // exit if WIN or LOSS
-				}
+    			@Override
+    			public void actionPerformed(ActionEvent e) {
+    				if (MainFrame.this.gameState != GameState.ONGOING) {
+    					return; // exit if WIN or LOSS
+    				}
+    				solverManager = new SolverManager(strategy, MainFrame.this.grid);
+    				stopTimer();
+    				solverManager.solveByStep();
+    				MainFrame.this.gameState = MainFrame.this.grid.getGameState();
+    				MainFrame.this.repaint();
+    				fireWinLossRules();
+    			}
+    		});
+            solveByStepMenuItem.setAccelerator(KeyStroke.getKeyStroke(strategy.getSingleStepKey(), KeyEvent.CTRL_MASK));
 
-				solverManager = new SolverManager(new SinglePointSolver(MainFrame.this.grid), MainFrame.this.grid);
-				ActionListener solveSingleStep = new ActionListener() {
-					private boolean solved = false;
+            // Solve complete button
+            JMenuItem solveMenuItem = new JMenuItem(strategy.getName());
+            solveMenuItem.addActionListener(new ActionListener() {
+            	
+    			@Override
+    			public void actionPerformed(ActionEvent e) {
+    				if (MainFrame.this.gameState != GameState.ONGOING) {
+    					return; // exit if WIN or LOSS
+    				}
 
-					@Override
-                    public void actionPerformed(ActionEvent ae) {
-                        if (solved) {
-                        	solveTimer.stop();
-                        	stopTimer();
-                        	glassPane.deactivate();
-                        	fireWinLossRules();
-                        } else {
-                        	if (MainFrame.this.grid.isPopulated() && MainFrame.this.grid.getGameState() != GameState.ONGOING) {
-                        		solved = true;
-                        		MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
-                        		return;
-                        	}
-                        	solverManager.solveByStep();
-                        	MainFrame.this.gameState = MainFrame.this.grid.getGameState();
-                        	MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
+    				solverManager = new SolverManager(strategy, MainFrame.this.grid);
+    				ActionListener solveSingleStep = new ActionListener() {
+    					private boolean solved = false;
+
+    					@Override
+                        public void actionPerformed(ActionEvent ae) {
+                            if (solved) {
+                            	solveTimer.stop();
+                            	stopTimer();
+                            	glassPane.deactivate();
+                            	fireWinLossRules();
+                            } else {
+                            	if (MainFrame.this.grid.isPopulated() && MainFrame.this.grid.getGameState() != GameState.ONGOING) {
+                            		solved = true;
+                            		MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
+                            		return;
+                            	}
+                            	solverManager.solveByStep();
+                            	MainFrame.this.gameState = MainFrame.this.grid.getGameState();
+                            	MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
+                            }
                         }
-                    }
-                };
-                
-                glassPane.activate();
-                solveTimer = new Timer(500, solveSingleStep);
-                solveTimer.setRepeats(true);
-                solveTimer.start();
-			}
-		});
-        solveMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_MASK));
-        
-        // SPSolve N Times button
-        JMenuItem solveNTimesMenuItem = new JMenuItem("SPSolve N Times");
-		solveNTimesMenuItem.addActionListener(new ActionListener() {
+                    };
+                    
+                    glassPane.activate();
+                    solveTimer = new Timer(500, solveSingleStep);
+                    solveTimer.setRepeats(true);
+                    solveTimer.start();
+    			}
+    		});
+            solveMenuItem.setAccelerator(KeyStroke.getKeyStroke(strategy.getSolveKey(), KeyEvent.CTRL_MASK));
+            
+            // Solve N Times button
+            JMenuItem solveNTimesMenuItem = new JMenuItem(strategy.getName() + " N Times");
+    		solveNTimesMenuItem.addActionListener(new ActionListener() {
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				String option = JOptionPane.showInputDialog(null, "N Times (0-1000)");
+    			@Override
+    			public void actionPerformed(ActionEvent e) {
+    				String option = JOptionPane.showInputDialog(null, "N Times (0-1000)");
 
-				try {
-					int times = Integer.parseInt(option);
-					if (times > 0 && times < 1000) {
-						ActionListener solveSingleGrid = new ActionListener() {
-							private int n = 0;
-							private boolean solved = false;
+    				try {
+    					int times = Integer.parseInt(option);
+    					if (times > 0 && times < 1000) {
+    						ActionListener solveSingleGrid = new ActionListener() {
+    							private int n = 0;
+    							private boolean solved = false;
 
-							@Override
-		                    public void actionPerformed(ActionEvent ae) {
-		                        if (n == times) {
-		                        	solveTimer.stop();
-		                        	stopTimer();
-		                        	MainFrame.this.repaint();
-		                        	glassPane.deactivate();
-		                        } else {
-		                        	if (solved) {
-		                        		n++;
-		                        		solved = false;
-		                        		MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
-		                        		return;
-		                        	}
-		                        	newGame(new Grid(MainFrame.this.grid.getConfig()));
-		                        	solverManager = new SolverManager(new SinglePointSolver(MainFrame.this.grid), MainFrame.this.grid);
-		                        	solverManager.complete();
-		                        	MainFrame.this.gameState = MainFrame.this.grid.getGameState();
-		                        	MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
-		                        	solved = true;
-		                        }
-		                    }
-		                };
+    							@Override
+    		                    public void actionPerformed(ActionEvent ae) {
+    		                        if (n == times) {
+    		                        	solveTimer.stop();
+    		                        	stopTimer();
+    		                        	MainFrame.this.repaint();
+    		                        	glassPane.deactivate();
+    		                        } else {
+    		                        	if (solved) {
+    		                        		n++;
+    		                        		solved = false;
+    		                        		MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
+    		                        		return;
+    		                        	}
+    		                        	newGame(new Grid(MainFrame.this.grid.getConfig()));
+    		                        	solverManager = new SolverManager(strategy, MainFrame.this.grid);
+    		                        	solverManager.complete();
+    		                        	MainFrame.this.gameState = MainFrame.this.grid.getGameState();
+    		                        	MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
+    		                        	solved = true;
+    		                        }
+    		                    }
+    		                };
 
-		                glassPane.activate();
-		                solveTimer = new Timer(500, solveSingleGrid);
-		                solveTimer.setRepeats(true);
-		                solveTimer.start();
-					} else {
-						System.out.println("Wrong configuration!");
-						JOptionPane.showMessageDialog(panel, "Out of Range!", "Error", JOptionPane.ERROR_MESSAGE);
-					}
-				} catch (NumberFormatException ex) {
-					System.out.println("Wrong format!");
-					if (option != null) {
-						JOptionPane.showMessageDialog(panel, "Wrong format!", "Error", JOptionPane.ERROR_MESSAGE);
-					}
-				}
-			}
-		});
-        solveNTimesMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, KeyEvent.CTRL_MASK));
-        
-        solverMenu.add(solveByStepMenuItem);       
-        solverMenu.add(solveMenuItem);
-        solverMenu.add(solveNTimesMenuItem);
-        menuBar.add(solverMenu);
-        
-        JMenu cspSolverMenu = new JMenu("CSPSolver");
-        
-        // CspSolve button
-        JMenuItem cspSolveMenuItem = new JMenuItem("CSPSolve");
-        cspSolveMenuItem.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (MainFrame.this.gameState != GameState.ONGOING) {
-					return; // exit if WIN or LOSS
-				}
-				solverManager = new SolverManager(new CSPSolver2(MainFrame.this.grid), MainFrame.this.grid);
-				//solve(false);
-			}
-		});
-        cspSolveMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, KeyEvent.CTRL_MASK));
-        
-        // CspSolve by step button
-        JMenuItem cspSolveByStepMenuItem = new JMenuItem("CSPSolve by step");
-        cspSolveByStepMenuItem.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (MainFrame.this.gameState != GameState.ONGOING) {
-					return; // exit if WIN or LOSS
-				}
-				solverManager = new SolverManager(new CSPSolver2(MainFrame.this.grid), MainFrame.this.grid);
-				//solve(true);
-			}
-		});
-        cspSolveByStepMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, KeyEvent.CTRL_MASK));
-        
-        // CspSolve N Times button
-        JMenuItem cspSolveNTimesMenuItem = new JMenuItem("CSPSolve N Times");
-        cspSolveNTimesMenuItem.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				String option = JOptionPane.showInputDialog(null, "N Times (0-1000)");
-				try {
-					int times = Integer.parseInt(option);
-					if (times > 0 && times < 1000) {
-						solverManager = new SolverManager(new CSPSolver2(MainFrame.this.grid), MainFrame.this.grid);
-						//solveNTimes(times);
-						return;
-					} else {
-						System.out.println("Wrong configuration!");
-						JOptionPane.showMessageDialog(panel, "Out of Range!", "Error", JOptionPane.ERROR_MESSAGE);
-					}
-				} catch (NumberFormatException ex) {
-					System.out.println("Wrong format!");
-					if (option != null) {
-						JOptionPane.showMessageDialog(panel, "Wrong format!", "Error", JOptionPane.ERROR_MESSAGE);
-					}
-				}
-			}
-		});
-		cspSolveNTimesMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_MASK));
-
-		cspSolverMenu.add(cspSolveMenuItem);
-		cspSolverMenu.add(cspSolveByStepMenuItem);
-		cspSolverMenu.add(cspSolveNTimesMenuItem);
-		menuBar.add(cspSolverMenu);
+    		                glassPane.activate();
+    		                solveTimer = new Timer(500, solveSingleGrid);
+    		                solveTimer.setRepeats(true);
+    		                solveTimer.start();
+    					} else {
+    						System.out.println("Wrong configuration!");
+    						JOptionPane.showMessageDialog(panel, "Out of Range!", "Error", JOptionPane.ERROR_MESSAGE);
+    					}
+    				} catch (NumberFormatException ex) {
+    					System.out.println("Wrong format!");
+    					if (option != null) {
+    						JOptionPane.showMessageDialog(panel, "Wrong format!", "Error", JOptionPane.ERROR_MESSAGE);
+    					}
+    				}
+    			}
+    		});
+            solveNTimesMenuItem.setAccelerator(KeyStroke.getKeyStroke(strategy.getSolveNTimesKey(), KeyEvent.CTRL_MASK));
+            
+            solverMenu.add(solveByStepMenuItem);       
+            solverMenu.add(solveMenuItem);
+            solverMenu.add(solveNTimesMenuItem);
+            menuBar.add(solverMenu);
+        }
 
 		this.setJMenuBar(menuBar);
 

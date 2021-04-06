@@ -172,7 +172,9 @@ public class CSPSolver2 implements MinesweeperSolver {
 		});
 		
 		if (locationsToFlag.isEmpty() && locationsToUncover.isEmpty()) {
-			if (grid.getSquareAt(new Location(0, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED) {
+			if (grid.getSquareAt(new Location(0, 0)).getState() == SquareState.COVERED) {
+				locationsToUncover.add(new Location(0, 0));
+			} else if (grid.getSquareAt(new Location(0, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED) {
 				locationsToUncover.add(new Location(0, grid.getConfig().getN_COLUMNS()-1));
 			} else if (grid.getSquareAt(new Location(grid.getConfig().getN_ROWS()-1, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED) {
 				locationsToUncover.add(new Location(grid.getConfig().getN_ROWS()-1, grid.getConfig().getN_COLUMNS()-1));
