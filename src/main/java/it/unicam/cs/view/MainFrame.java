@@ -101,6 +101,8 @@ public class MainFrame extends JFrame {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		
+		this.glassPane.getStopButton().setFont(customFont);
 
 		MainFrame.this.getRootPane().setGlassPane(glassPane);
 
@@ -222,6 +224,19 @@ public class MainFrame extends JFrame {
     				}
 
     				solverManager = new SolverManager(strategy, MainFrame.this.grid);
+    				
+    				ActionListener cancelButtonAction = new ActionListener() {
+						
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							solveTimer.stop();
+							stopTimer();
+							glassPane.deactivate();
+							MainFrame.this.repaint();
+							glassPane.getStopButton().removeActionListener(this);
+						}
+					};
+    				
     				ActionListener solveSingleStep = new ActionListener() {
     					private boolean solved = false;
 
@@ -232,6 +247,7 @@ public class MainFrame extends JFrame {
                             	stopTimer();
                             	glassPane.deactivate();
                             	fireWinLossRules();
+                            	glassPane.getStopButton().removeActionListener(cancelButtonAction);
                             } else {
                             	if (MainFrame.this.grid.isPopulated() && MainFrame.this.grid.getGameState() != GameState.ONGOING) {
                             		solved = true;
@@ -246,6 +262,7 @@ public class MainFrame extends JFrame {
                     };
                     
                     glassPane.activate();
+                    glassPane.getStopButton().addActionListener(cancelButtonAction);
                     solveTimer = new Timer(500, solveSingleStep);
                     solveTimer.setRepeats(true);
                     solveTimer.start();
@@ -264,6 +281,18 @@ public class MainFrame extends JFrame {
     				try {
     					int times = Integer.parseInt(option);
     					if (times > 0 && times < 1000) {
+    						ActionListener cancelButtonAction = new ActionListener() {
+    							
+    							@Override
+    							public void actionPerformed(ActionEvent e) {
+    								solveTimer.stop();
+    								stopTimer();
+    								glassPane.deactivate();
+    								MainFrame.this.repaint();
+    								glassPane.getStopButton().removeActionListener(this);
+    							}
+    						};
+    						
     						ActionListener solveSingleGrid = new ActionListener() {
     							private int n = 0;
     							private boolean solved = false;
@@ -273,8 +302,9 @@ public class MainFrame extends JFrame {
     		                        if (n == times) {
     		                        	solveTimer.stop();
     		                        	stopTimer();
-    		                        	MainFrame.this.repaint();
     		                        	glassPane.deactivate();
+    		                        	MainFrame.this.repaint();
+    		                        	glassPane.getStopButton().removeActionListener(cancelButtonAction);
     		                        } else {
     		                        	if (solved) {
     		                        		n++;
@@ -293,6 +323,7 @@ public class MainFrame extends JFrame {
     		                };
 
     		                glassPane.activate();
+    		                glassPane.getStopButton().addActionListener(cancelButtonAction);
     		                solveTimer = new Timer(500, solveSingleGrid);
     		                solveTimer.setRepeats(true);
     		                solveTimer.start();
@@ -398,7 +429,6 @@ public class MainFrame extends JFrame {
 				if (elapsedSeconds < 999) {
 					elapsedSeconds++;
 				}
-				System.out.println(elapsedSeconds);
 				timerLabel.repaint();
 			}
 		});
