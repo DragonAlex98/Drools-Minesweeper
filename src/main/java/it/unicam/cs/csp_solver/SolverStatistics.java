@@ -7,9 +7,8 @@ import lombok.ToString;
 @Getter
 @ToString
 public class SolverStatistics {
-	private static SolverStatistics instance = null;
-	
-	private long totalSolvingTime = 0;
+
+	private double totalSolvingTime = 0;
 	
 	private double averageSolvingTime = 0;
 	
@@ -17,10 +16,10 @@ public class SolverStatistics {
 
 	private double losePercentage = 0;
 	
-	private double winLoseRate = 0;
-	
+	@Setter
 	private int winNumber = 0;
 	
+	@Setter
 	private int loseNumber = 0;
 	
 	@Setter
@@ -34,20 +33,9 @@ public class SolverStatistics {
 	
 	private double percentageOfLoseCausedByRandomDecisions = 0; 
 	
-	private SolverStatistics() { }
+	public SolverStatistics() { }
 	
-	public static SolverStatistics getInstance() {
-		if (instance == null)
-			instance = new SolverStatistics();
-		
-		return instance;
-	}
-	
-	public void clear() {
-		instance = new SolverStatistics();
-	}
-	
-	public void increaseTotalSolvingTime(long totalTime) {
+	public void increaseTotalSolvingTime(double totalTime) {
 		this.totalSolvingTime += totalTime;
 	}
 	
@@ -71,8 +59,7 @@ public class SolverStatistics {
 		this.averageSolvingTime = this.totalSolvingTime / this.numberOfRuns;
 		this.winPercentage = (double) this.winNumber / this.numberOfRuns;
 		this.losePercentage = 1 - this.winPercentage;
-		this.winLoseRate = (double) this.winNumber / this.loseNumber;
-		this.averageNumberOfRandomDecisions = this.totalNumberOfRandomDecisions / this.numberOfRuns;
-		this.percentageOfLoseCausedByRandomDecisions = (double) this.numberOfRandomDecisionsLeadingToLose / this.loseNumber;
+		this.averageNumberOfRandomDecisions = (double) this.totalNumberOfRandomDecisions / this.numberOfRuns;
+		this.percentageOfLoseCausedByRandomDecisions = (this.loseNumber == 0) ? 0 : (double) this.numberOfRandomDecisionsLeadingToLose / this.loseNumber;
 	}
 }

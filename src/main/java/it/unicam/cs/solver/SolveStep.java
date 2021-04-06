@@ -19,4 +19,10 @@ public class SolveStep {
 	private List<Location> locationsToFlag;
 	/** List of locations to uncover **/
 	private List<Location> locationsToUncover;
+	/** Whether the solve step is not certain **/
+	private boolean isStepRandom;
+	
+	public SolveStep(List<Location> locationsToFlag, List<Location> locationsToUncover) {
+		this(locationsToFlag, locationsToUncover, false);
+	}
 }

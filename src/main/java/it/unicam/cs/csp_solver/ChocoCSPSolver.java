@@ -463,7 +463,7 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 
 	public void solveCompleteNTimes(int numberOfRuns) {
 		
-		SolverStatistics.getInstance().setNumberOfRuns(numberOfRuns);
+		//SolverStatistics.getInstance().setNumberOfRuns(numberOfRuns);
 
 		for (int counter = 0; counter < numberOfRuns; counter++) {
 			DroolsUtils.getInstance().clear();
@@ -480,14 +480,14 @@ public class ChocoCSPSolver implements MinesweeperSolver {
 			long runEndTime = System.nanoTime();
 			
 			if (this.grid.getGameState() == GameState.WIN) {
-				SolverStatistics.getInstance().increaseWin();
+				//SolverStatistics.getInstance().increaseWin();
 			} else if (this.grid.getGameState() == GameState.LOSS) {
-				SolverStatistics.getInstance().increaseLose();
+				//SolverStatistics.getInstance().increaseLose();
 			}
 			
-			SolverStatistics.getInstance().increaseTotalSolvingTime(runEndTime-runStartTime);
+			//SolverStatistics.getInstance().increaseTotalSolvingTime(runEndTime-runStartTime);
 		}
-		SolverStatistics.getInstance().consolidate();
-		System.out.println(SolverStatistics.getInstance());
+		//SolverStatistics.getInstance().consolidate();
+		//System.out.println(SolverStatistics.getInstance());
 	}
 }

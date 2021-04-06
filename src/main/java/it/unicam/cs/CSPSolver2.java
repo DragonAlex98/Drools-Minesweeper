@@ -199,6 +199,7 @@ public class CSPSolver2 implements MinesweeperSolver {
 					return null;
 				}
 			}
+			return new SolveStep(new ArrayList<Location>(locationsToFlag), new ArrayList<Location>(locationsToUncover), true);
 		}
 
 		return new SolveStep(new ArrayList<Location>(locationsToFlag), new ArrayList<Location>(locationsToUncover));
