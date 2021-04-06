@@ -5,6 +5,7 @@ import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
@@ -14,6 +15,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JProgressBar;
 
 import it.unicam.cs.model.SquareImages;
 import lombok.Getter;
@@ -25,18 +27,24 @@ public class MainGlassPane extends JComponent implements KeyListener {
 	private static final JLabel iconLabel = new JLabel(SquareImages.getInstance().getIcons().get("loading"));
 	@Getter
 	private JButton stopButton = new JButton("Stop");
+	@Getter
+	private JProgressBar progressBar = new JProgressBar(0, 100);
 	
 	public MainGlassPane() {
 		setOpaque(false);
 		setBackground(BACKGROUND_COLOR);
 		setLayout(new GridBagLayout());
 		GridBagConstraints constraints = new GridBagConstraints();
+		constraints.insets = new Insets(5, 0, 5, 0);
 		constraints.gridy = 0;
 		add(iconLabel, constraints);
 		constraints.gridy = 1;
-		add(stopButton, constraints);
 		stopButton.setForeground(Color.RED);
 		stopButton.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
+		add(stopButton, constraints);
+		constraints.gridy = 2;
+		progressBar.setForeground(Color.GREEN);
+		add(progressBar, constraints);
 		setFocusTraversalKeysEnabled(false);
 		addMouseListener(new MouseAdapter() {});
 		addMouseMotionListener(new MouseMotionAdapter() {});

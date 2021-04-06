@@ -9,6 +9,7 @@ import it.unicam.cs.enumeration.SolveStrategy;
 import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
+import lombok.Getter;
 
 /**
  * Class used to manage the various steps that a specific Solver has to perform,
@@ -21,17 +22,37 @@ public class SolverManager {
 	/** The grid used by the Solver **/
 	private Grid grid;
 	/** SolverStatistics to store statistics **/
+	@Getter
 	private SolverStatistics solverStatistics;
 	/** Whether last SolveStep was chosen randomly **/
 	private boolean isLastStepRandom;
-	
+	/** Whether to record statistics **/
+	private boolean shouldRecordStatistics;
+
 	public SolverManager(SolveStrategy strategy, Grid grid) {
+		this(strategy, grid, false);
+	}
+
+	public SolverManager(SolveStrategy strategy, Grid grid, boolean shouldRecordStatistics) {
 		try {
 			this.solver = strategy.getSolverClass().getConstructor(Grid.class).newInstance(grid);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		this.grid = grid;
+		this.shouldRecordStatistics = shouldRecordStatistics;
+		if (shouldRecordStatistics) {
+			this.solverStatistics = new SolverStatistics();
+		}
+	}
+	
+	public void updateSolver(Grid grid) {
+		try {
+			this.grid = grid;
+			this.solver = solver.getClass().getConstructor(Grid.class).newInstance(grid);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -59,7 +80,7 @@ public class SolverManager {
 		if (step == null) {
 			Location location = getCornerOrRandomLocation();
 			DroolsUtils.getInstance().insertAndFire("UNCOVER", location);
-			if (solverStatistics != null) {
+			if (shouldRecordStatistics) {
 				solverStatistics.increaseTotalNumberOfRandomDecisions();
 				isLastStepRandom = true;
 			}
@@ -67,7 +88,7 @@ public class SolverManager {
 		}
 		
 		if (step.isStepRandom()) {
-			if (solverStatistics != null) {
+			if (shouldRecordStatistics) {
 				solverStatistics.increaseTotalNumberOfRandomDecisions();
 				isLastStepRandom = true;
 			}
@@ -86,53 +107,36 @@ public class SolverManager {
 	 * state of the grid.
 	 */
 	public void complete() {
+		long runStartTime = 0;
+		long runEndTime = 0;
+		if (shouldRecordStatistics) {
+			runStartTime = System.currentTimeMillis();
+		}
 		if (!grid.isPopulated()) {
 			firstStep();
 		}
 		
-		while(grid.getGameState() == GameState.ONGOING) {
-			if (solverStatistics != null) {
+		while (grid.getGameState() == GameState.ONGOING) {
+			if (shouldRecordStatistics) {
 				isLastStepRandom = false;
 			}
 			solveByStep();
 		}
-	}
-
-	/**
-	 * Method used to run and solve different game many times (n).
-	 * 
-	 * @param n Number of times to run and solve a game.
-	 */
-	public void completeNTimes(int n) throws Exception {
-		this.solverStatistics = new SolverStatistics();
-
-		int win = 0;
-		int lose = 0;
-		for (int i = 0; i < n; i++) {
-			DroolsUtils.getInstance().clear();
-			grid = new Grid(grid.getConfig());
-			solver = solver.getClass().getConstructor(Grid.class).newInstance(grid);
-			long runStartTime = System.currentTimeMillis();
-			complete();
-			long runEndTime = System.currentTimeMillis();
+		if (shouldRecordStatistics) {
+			runEndTime = System.currentTimeMillis();
 			solverStatistics.increaseTotalSolvingTime((runEndTime - runStartTime)/1000f);
 			if (grid.getGameState() == GameState.WIN) {
-				win++;
+				solverStatistics.increaseWin();
 			} else if (grid.getGameState() == GameState.LOSS) {
 				if (isLastStepRandom) {
 					solverStatistics.increaseNumberOfRandomDecisionsLeadingToLose();
 					isLastStepRandom = false;
 				}
-				lose++;
+				solverStatistics.increaseLose();
 			}
-			System.out.println("Win: " + win + ", Lose: " + lose + ", Win Rate: " + (double) win / (win + lose) * 100f);
+			solverStatistics.increaseRun();
 		}
-		System.out.println("Win: " + win + ", Lose: " + lose + ", Win Rate: " + (double) win / (win + lose) * 100f);
-		solverStatistics.setWinNumber(win);
-		solverStatistics.setLoseNumber(lose);
-		solverStatistics.setNumberOfRuns(n);
-		solverStatistics.consolidate();
-		System.out.println(solverStatistics);
+		//System.out.println("Win: " + win + ", Lose: " + lose + ", Win Rate: " + (double) win / (win + lose) * 100f);
 	}
 
 	/**
@@ -161,7 +165,14 @@ public class SolverManager {
 
 	public static void main(String[] args) throws Exception {
 		Grid grid = new Grid(Difficulty.EXPERT.getConfiguration());
-		SolverManager manager = new SolverManager(SolveStrategy.CSP, grid);
-		manager.completeNTimes(1000);
+		SolverManager manager = new SolverManager(SolveStrategy.CSP, grid, true);
+		for (int i = 0; i < 1000; i++) {
+			DroolsUtils.getInstance().clear();
+			Grid newGrid = new Grid(manager.grid.getConfig());
+			manager.updateSolver(newGrid);
+			manager.complete();
+		}
+		manager.getSolverStatistics().consolidate();
+		System.out.println(manager.getSolverStatistics());
 	}
 }

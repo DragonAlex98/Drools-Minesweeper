@@ -255,12 +255,14 @@ public class MainFrame extends JFrame {
                             		return;
                             	}
                             	solverManager.solveByStep();
+                            	glassPane.getProgressBar().setValue((int) (MainFrame.this.grid.getGridAsStream().filter(s -> s.getState() == SquareState.UNCOVERED).count() * 100 / (MainFrame.this.grid.getConfig().getN_ROWS() * MainFrame.this.grid.getConfig().getN_COLUMNS() - MainFrame.this.grid.getConfig().getN_BOMBS())));
                             	MainFrame.this.gameState = MainFrame.this.grid.getGameState();
                             	MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
                             }
                         }
                     };
-                    
+
+                    glassPane.getProgressBar().setValue(0);
                     glassPane.activate();
                     glassPane.getStopButton().addActionListener(cancelButtonAction);
                     solveTimer = new Timer(500, solveSingleStep);
@@ -276,11 +278,11 @@ public class MainFrame extends JFrame {
 
     			@Override
     			public void actionPerformed(ActionEvent e) {
-    				String option = JOptionPane.showInputDialog(null, "N Times (0-1000)");
+    				String option = JOptionPane.showInputDialog(null, "N Times (1-1000)");
 
     				try {
     					int times = Integer.parseInt(option);
-    					if (times > 0 && times < 1000) {
+    					if (times >= 1 && times <= 1000) {
     						ActionListener cancelButtonAction = new ActionListener() {
     							
     							@Override
@@ -305,15 +307,19 @@ public class MainFrame extends JFrame {
     		                        	glassPane.deactivate();
     		                        	MainFrame.this.repaint();
     		                        	glassPane.getStopButton().removeActionListener(cancelButtonAction);
+    		                        	solverManager.getSolverStatistics().consolidate();
+    		                        	JOptionPane.showMessageDialog(panel, solverManager.getSolverStatistics(), "Solver Statistics", JOptionPane.INFORMATION_MESSAGE, SquareImages.getInstance().getIcons().get("stat"));
     		                        } else {
     		                        	if (solved) {
     		                        		n++;
+    		                        		glassPane.getProgressBar().setValue(n * 100 / times);
     		                        		solved = false;
     		                        		MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
     		                        		return;
     		                        	}
-    		                        	newGame(new Grid(MainFrame.this.grid.getConfig()));
-    		                        	solverManager = new SolverManager(strategy, MainFrame.this.grid);
+    		                        	Grid newGrid = new Grid(MainFrame.this.grid.getConfig());
+    		                        	newGame(newGrid);
+    		                        	solverManager.updateSolver(newGrid);
     		                        	solverManager.complete();
     		                        	MainFrame.this.gameState = MainFrame.this.grid.getGameState();
     		                        	MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
@@ -322,9 +328,11 @@ public class MainFrame extends JFrame {
     		                    }
     		                };
 
+    		                solverManager = new SolverManager(strategy, MainFrame.this.grid, true);
+    		                glassPane.getProgressBar().setValue(0);
     		                glassPane.activate();
     		                glassPane.getStopButton().addActionListener(cancelButtonAction);
-    		                solveTimer = new Timer(500, solveSingleGrid);
+    		                solveTimer = new Timer(10, solveSingleGrid);
     		                solveTimer.setRepeats(true);
     		                solveTimer.start();
     					} else {
