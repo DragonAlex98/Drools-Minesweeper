@@ -2,7 +2,6 @@ package it.unicam.cs.view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -28,7 +27,6 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -65,8 +63,8 @@ public class MainFrame extends JFrame {
 	private Timer solveTimer = null;
 	private int elapsedSeconds = 0;
 	private SolverManager solverManager = null;
+	private MainGlassPane glassPane = new MainGlassPane();
 	
-	@SuppressWarnings("deprecation")
 	public MainFrame(String title, Grid grid) {
 		super(title);
 
@@ -104,6 +102,8 @@ public class MainFrame extends JFrame {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+		MainFrame.this.getRootPane().setGlassPane(glassPane);
 
 		JMenuBar menuBar = new JMenuBar();
 		
@@ -193,68 +193,6 @@ public class MainFrame extends JFrame {
 
         JMenu solverMenu = new JMenu("SPSolver");
         
-        // SPSolve complete button
-        JMenuItem solveMenuItem = new JMenuItem("SPSolve");
-        solveMenuItem.addActionListener(new ActionListener() {
-        	
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (MainFrame.this.gameState != GameState.ONGOING) {
-					return; // exit if WIN or LOSS
-				}
-				solverManager = new SolverManager(new SinglePointSolver(MainFrame.this.grid), MainFrame.this.grid);
-				solve(false);
-				
-				// TODO put this into N times button action performed 
-				/*JLabel iconLabel = new JLabel(SquareImages.getInstance().getIcons().get("loss"));
-				Color backgroundColor = new Color(255, 255, 255, 128);
-				JComponent glassPane = new JComponent() {
-					private static final long serialVersionUID = 1L;
-					
-					@Override
-					protected void paintComponent(Graphics g) {
-						g.setColor(backgroundColor);
-						g.fillRect(0, 0, getWidth(), getHeight());
-					}
-
-					public void setBackground(Color bg) {
-						super.setBackground(bg);
-						iconLabel.setBackground(bg);
-					};
-				};
-				glassPane.setOpaque(false);
-				glassPane.setBackground(backgroundColor);
-				glassPane.setLayout(new BorderLayout());
-				glassPane.add(iconLabel, BorderLayout.CENTER);
-				MainFrame.this.getRootPane().setGlassPane(glassPane);
-				glassPane.setVisible(true);
-				glassPane.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-				glassPane.requestFocusInWindow();
-				ActionListener solveSingleStep = new ActionListener() {
-					private boolean solved = false;
-
-					@Override
-                    public void actionPerformed(ActionEvent ae) {
-                        if (solved) {
-                        	solveTimer.stop();
-                            System.out.println("FINITO!");
-                            glassPane.setCursor(null);
-            				glassPane.setVisible(false);
-                        } else {
-                        	solverManager = new SolverManager(new SinglePointSolver(grid), grid);
-            				solveNTimes(2);
-                        	MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getBounds());
-                        	solved = true;
-                        }
-                    }
-                };
-                solveTimer = new Timer(1000, solveSingleStep);
-                solveTimer.start();
-                */
-			}
-		});
-        solveMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_MASK));
-        
         // SPSolve by step button
         JMenuItem solveByStepMenuItem = new JMenuItem("SPSolve by step");
         solveByStepMenuItem.addActionListener(new ActionListener() {
@@ -265,10 +203,56 @@ public class MainFrame extends JFrame {
 					return; // exit if WIN or LOSS
 				}
 				solverManager = new SolverManager(new SinglePointSolver(MainFrame.this.grid), MainFrame.this.grid);
-				solve(true);
+				stopTimer();
+				solverManager.solveByStep();
+				MainFrame.this.gameState = MainFrame.this.grid.getGameState();
+				MainFrame.this.repaint();
+				fireWinLossRules();
 			}
 		});
         solveByStepMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.CTRL_MASK));
+        
+        // SPSolve complete button
+        JMenuItem solveMenuItem = new JMenuItem("SPSolve");
+        solveMenuItem.addActionListener(new ActionListener() {
+        	
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (MainFrame.this.gameState != GameState.ONGOING) {
+					return; // exit if WIN or LOSS
+				}
+
+				solverManager = new SolverManager(new SinglePointSolver(MainFrame.this.grid), MainFrame.this.grid);
+				ActionListener solveSingleStep = new ActionListener() {
+					private boolean solved = false;
+
+					@Override
+                    public void actionPerformed(ActionEvent ae) {
+                        if (solved) {
+                        	solveTimer.stop();
+                        	stopTimer();
+                        	glassPane.deactivate();
+                        	fireWinLossRules();
+                        } else {
+                        	if (MainFrame.this.grid.isPopulated() && MainFrame.this.grid.getGameState() != GameState.ONGOING) {
+                        		solved = true;
+                        		MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
+                        		return;
+                        	}
+                        	solverManager.solveByStep();
+                        	MainFrame.this.gameState = MainFrame.this.grid.getGameState();
+                        	MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
+                        }
+                    }
+                };
+                
+                glassPane.activate();
+                solveTimer = new Timer(500, solveSingleStep);
+                solveTimer.setRepeats(true);
+                solveTimer.start();
+			}
+		});
+        solveMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_MASK));
         
         // SPSolve N Times button
         JMenuItem solveNTimesMenuItem = new JMenuItem("SPSolve N Times");
@@ -281,9 +265,38 @@ public class MainFrame extends JFrame {
 				try {
 					int times = Integer.parseInt(option);
 					if (times > 0 && times < 1000) {
-						solverManager = new SolverManager(new SinglePointSolver(MainFrame.this.grid), MainFrame.this.grid);
-						solveNTimes(times);
-						return;
+						ActionListener solveSingleGrid = new ActionListener() {
+							private int n = 0;
+							private boolean solved = false;
+
+							@Override
+		                    public void actionPerformed(ActionEvent ae) {
+		                        if (n == times) {
+		                        	solveTimer.stop();
+		                        	stopTimer();
+		                        	MainFrame.this.repaint();
+		                        	glassPane.deactivate();
+		                        } else {
+		                        	if (solved) {
+		                        		n++;
+		                        		solved = false;
+		                        		MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
+		                        		return;
+		                        	}
+		                        	newGame(new Grid(MainFrame.this.grid.getConfig()));
+		                        	solverManager = new SolverManager(new SinglePointSolver(MainFrame.this.grid), MainFrame.this.grid);
+		                        	solverManager.complete();
+		                        	MainFrame.this.gameState = MainFrame.this.grid.getGameState();
+		                        	MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
+		                        	solved = true;
+		                        }
+		                    }
+		                };
+
+		                glassPane.activate();
+		                solveTimer = new Timer(500, solveSingleGrid);
+		                solveTimer.setRepeats(true);
+		                solveTimer.start();
 					} else {
 						System.out.println("Wrong configuration!");
 						JOptionPane.showMessageDialog(panel, "Out of Range!", "Error", JOptionPane.ERROR_MESSAGE);
@@ -298,8 +311,8 @@ public class MainFrame extends JFrame {
 		});
         solveNTimesMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, KeyEvent.CTRL_MASK));
         
-        solverMenu.add(solveMenuItem);
         solverMenu.add(solveByStepMenuItem);       
+        solverMenu.add(solveMenuItem);
         solverMenu.add(solveNTimesMenuItem);
         menuBar.add(solverMenu);
         
@@ -315,7 +328,7 @@ public class MainFrame extends JFrame {
 					return; // exit if WIN or LOSS
 				}
 				solverManager = new SolverManager(new CSPSolver2(MainFrame.this.grid), MainFrame.this.grid);
-				solve(false);
+				//solve(false);
 			}
 		});
         cspSolveMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, KeyEvent.CTRL_MASK));
@@ -330,7 +343,7 @@ public class MainFrame extends JFrame {
 					return; // exit if WIN or LOSS
 				}
 				solverManager = new SolverManager(new CSPSolver2(MainFrame.this.grid), MainFrame.this.grid);
-				solve(true);
+				//solve(true);
 			}
 		});
         cspSolveByStepMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, KeyEvent.CTRL_MASK));
@@ -346,7 +359,7 @@ public class MainFrame extends JFrame {
 					int times = Integer.parseInt(option);
 					if (times > 0 && times < 1000) {
 						solverManager = new SolverManager(new CSPSolver2(MainFrame.this.grid), MainFrame.this.grid);
-						solveNTimes(times);
+						//solveNTimes(times);
 						return;
 					} else {
 						System.out.println("Wrong configuration!");
@@ -463,7 +476,6 @@ public class MainFrame extends JFrame {
 		this.pack();
 		this.setLocationRelativeTo(null);
 		this.setVisible(true);
-
 	}
 	
 	/**
@@ -576,53 +588,14 @@ public class MainFrame extends JFrame {
 		//this.setLocationRelativeTo(null);
 		this.panel.init(grid);
 		this.repaint();
-	}	
-
-	/**
-	 * Method to solve the Minesweeper game using the SolverManager and the current
-	 * state of the grid.
-	 * 
-	 * @param isByStep True if the Solver should perform only one resolution step,
-	 *                 False otherwise.
-	 */
-	private void solve(boolean isByStep) {
-		stopTimer();
-		if (isByStep) {
-			solverManager.solveByStep();
-		} else {
-			solverManager.complete();
-			;
-		}
-		this.gameState = this.grid.getGameState();
-		fireWinLossRules();
-		this.repaint();
-	}
-    
-	/**
-	 * Method to solve the Minesweeper game many times (nTimes parameter) using the
-	 * SolverManager and the current state of the grid.
-	 * 
-	 * @param isByStep True if the Solver should perform only one resolution step,
-	 *                 False otherwise.
-	 */
-	private void solveNTimes(int nTimes) {
-		stopTimer();
-		try {
-			solverManager.completeNTimes(nTimes);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		this.repaint();
 	}
 
 	/**
 	 * Method to stop the timer
 	 */
 	private void stopTimer() {
-		if (this.gameState == GameState.ONGOING) {
-			this.elapsedSeconds = 999;
-			this.timer.stop();
-		}
+		this.elapsedSeconds = 999;
+		this.timer.stop();
 	}
 
 	/**
