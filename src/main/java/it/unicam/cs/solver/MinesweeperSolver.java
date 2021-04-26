@@ -1,6 +1,4 @@
-package it.unicam.cs.csp_solver;
-
-import it.unicam.cs.solver.SolveStep;
+package it.unicam.cs.solver;
 
 /**
  * Interface that represent a Minesweeper Solver.

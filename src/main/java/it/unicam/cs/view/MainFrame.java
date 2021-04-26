@@ -40,7 +40,6 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
-import it.unicam.cs.controller.DroolsUtils;
 import it.unicam.cs.enumeration.Difficulty;
 import it.unicam.cs.enumeration.GameState;
 import it.unicam.cs.enumeration.SolveStrategy;
@@ -48,8 +47,9 @@ import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.model.Configuration;
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
-import it.unicam.cs.model.SquareImages;
 import it.unicam.cs.solver.SolverManager;
+import it.unicam.cs.utils.DroolsUtils;
+import it.unicam.cs.utils.SquareImages;
 
 public class MainFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -69,10 +69,11 @@ public class MainFrame extends JFrame {
 
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setResizable(true);
+		this.setGlassPane(glassPane);
 		try {
 			this.setIconImage(ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/bomb.png")));
-		} catch (IOException e1) {
-			e1.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		this.addWindowListener(new WindowAdapter() {
 
@@ -103,8 +104,6 @@ public class MainFrame extends JFrame {
 		}
 		
 		this.glassPane.getStopButton().setFont(customFont);
-
-		MainFrame.this.getRootPane().setGlassPane(glassPane);
 
 		JMenuBar menuBar = new JMenuBar();
 		
@@ -488,15 +487,14 @@ public class MainFrame extends JFrame {
 						}
 						if (SwingUtilities.isLeftMouseButton(e)) {
 							if (e.getClickCount() == 1) { // if 1 left click, activate UNCOVER rules
-								DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "UNCOVER" ).setFocus();
+								DroolsUtils.getInstance().insertAndFire("UNCOVER", squareLocation);
 							} else if (e.getClickCount() == 2) { // if 2 left click, activate CHORD rules
-								DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "CHORD" ).setFocus();
+								DroolsUtils.getInstance().insertAndFire("CHORD", squareLocation);
 							}
 						}
 						if (SwingUtilities.isRightMouseButton(e)) { // if right click, activate FLAG rules
-							DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup( "FLAG" ).setFocus();
+							DroolsUtils.getInstance().insertAndFire("FLAG", squareLocation);
 						}
-						DroolsUtils.getInstance().insertAndFire(squareLocation);
 						MainFrame.this.gameState = MainFrame.this.grid.getGameState(); // update state
 						MainFrame.this.repaint();
 						if (MainFrame.this.gameState != GameState.ONGOING) {

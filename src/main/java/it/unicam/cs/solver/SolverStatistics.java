@@ -1,4 +1,4 @@
-package it.unicam.cs.csp_solver;
+package it.unicam.cs.solver;
 
 import lombok.NoArgsConstructor;
 
@@ -51,9 +51,9 @@ public class SolverStatistics {
 	
 	public void consolidate() {
 		this.averageSolvingTime = this.totalSolvingTime / this.numberOfRuns;
-		this.winPercentage = (double) this.winNumber / this.numberOfRuns;
+		this.winPercentage = ((double) this.winNumber / this.numberOfRuns) * 100;
 		this.averageNumberOfRandomDecisions = (double) this.totalNumberOfRandomDecisions / this.numberOfRuns;
-		this.percentageOfLoseCausedByRandomDecisions = (this.loseNumber == 0) ? 0 : (double) this.numberOfRandomDecisionsLeadingToLose / this.loseNumber;
+		this.percentageOfLoseCausedByRandomDecisions = (this.loseNumber == 0) ? 0 : ((double) this.numberOfRandomDecisionsLeadingToLose / this.loseNumber) * 100;
 	}
 	
 	@Override
@@ -62,14 +62,14 @@ public class SolverStatistics {
 		s += String.format("Total Solving Time: %.2fs", this.totalSolvingTime) + System.lineSeparator();
 		s += String.format("Average Solving Time: %.2fs", this.averageSolvingTime) + System.lineSeparator();
 		s += System.lineSeparator();
-		s += String.format("Win Percentage: %.2f%%", this.winPercentage * 100) + System.lineSeparator();
+		s += String.format("Win Percentage: %.2f%%", this.winPercentage) + System.lineSeparator();
 		s += "Wins: " + this.winNumber + System.lineSeparator();
 		s += "Losses: " + this.loseNumber + System.lineSeparator();
 		s += "Total Runs: " + this.numberOfRuns + System.lineSeparator();
 		s += System.lineSeparator();
 		s += "Total random decisions: " + this.totalNumberOfRandomDecisions + System.lineSeparator();
 		s += String.format("Average random decisions: %.2f", this.averageNumberOfRandomDecisions) + System.lineSeparator();
-		s += String.format("Loss by random decisions: %.2f%%", this.percentageOfLoseCausedByRandomDecisions * 100);
+		s += String.format("Loss by random decisions: %.2f%%", this.percentageOfLoseCausedByRandomDecisions);
 		return s;
 	}
 }

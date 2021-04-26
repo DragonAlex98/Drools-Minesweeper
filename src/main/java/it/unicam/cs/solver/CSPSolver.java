@@ -1,4 +1,4 @@
-package it.unicam.cs;
+package it.unicam.cs.solver;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,20 +14,17 @@ import org.chocosolver.solver.Solution;
 import org.chocosolver.solver.Solver;
 import org.chocosolver.solver.variables.BoolVar;
 
-import it.unicam.cs.csp_solver.MinesweeperSolver;
 import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.enumeration.SquareType;
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
 import it.unicam.cs.model.Number;
-import it.unicam.cs.solver.SinglePointSolver;
-import it.unicam.cs.solver.SolveStep;
 
-public class CSPSolver2 implements MinesweeperSolver {
+public class CSPSolver implements MinesweeperSolver {
 
 	private Grid grid;
 	
-	public CSPSolver2(Grid grid) {
+	public CSPSolver(Grid grid) {
 		this.grid = grid;
 	}
 

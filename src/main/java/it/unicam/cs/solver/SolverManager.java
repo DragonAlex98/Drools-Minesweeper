@@ -1,14 +1,12 @@
 package it.unicam.cs.solver;
 
-import it.unicam.cs.controller.DroolsUtils;
-import it.unicam.cs.csp_solver.MinesweeperSolver;
-import it.unicam.cs.csp_solver.SolverStatistics;
 import it.unicam.cs.enumeration.Difficulty;
 import it.unicam.cs.enumeration.GameState;
 import it.unicam.cs.enumeration.SolveStrategy;
 import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
+import it.unicam.cs.utils.DroolsUtils;
 import lombok.Getter;
 
 /**

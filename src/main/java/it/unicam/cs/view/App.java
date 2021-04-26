@@ -1,14 +1,12 @@
 package it.unicam.cs.view;
 
-import it.unicam.cs.model.Configuration;
+import it.unicam.cs.enumeration.Difficulty;
 import it.unicam.cs.model.Grid;
 
 public class App {
 
 	public static void main(String[] args) {
-		Configuration config = new Configuration(9, 9, 10);
-		Grid grid = new Grid(config);
-
+		Grid grid = new Grid(Difficulty.BEGINNER.getConfiguration());
 		new MainFrame("Minesweeper", grid);
 	}
 }

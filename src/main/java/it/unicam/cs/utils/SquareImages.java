@@ -1,4 +1,4 @@
-package it.unicam.cs.model;
+package it.unicam.cs.utils;
 
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -12,6 +12,8 @@ import javax.swing.ImageIcon;
 
 import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.enumeration.SquareType;
+import it.unicam.cs.model.Number;
+import it.unicam.cs.model.Square;
 import it.unicam.cs.view.MainFrame;
 import it.unicam.cs.view.MainPanel;
 import lombok.Getter;

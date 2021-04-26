@@ -15,16 +15,13 @@ import javax.swing.JPanel;
 
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
-import it.unicam.cs.model.SquareImages;
-import lombok.Getter;
+import it.unicam.cs.utils.SquareImages;
 
 public class MainPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 	
 	private Grid grid;
-	@Getter
 	private float squareWidth;
-	@Getter
 	private float squareHeight;
 
 	private Map<String, Image> images = new HashMap<String, Image>();
@@ -84,7 +81,6 @@ public class MainPanel extends JPanel {
 			grid.getGridAsStream().forEach(s -> {
 				String string = SquareImages.getInstance().getSquareImage(s);
 				g.drawImage(images.get(string), (int)(squareWidth*s.getLocation().getColumn()), (int)(squareHeight*s.getLocation().getRow()), null);
-				return;
 			});
 		} else {
 			Image coveredImage = images.get("covered");
