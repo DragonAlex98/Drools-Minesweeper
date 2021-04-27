@@ -239,6 +239,7 @@ public class MainFrame extends JFrame {
         // Solve N Times button
         JMenuItem solveNTimesMenuItem = new JMenuItem(strategy.getName() + " N Times");
 		solveNTimesMenuItem.addActionListener(new ActionListener() {
+			private long startTime;
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -267,11 +268,13 @@ public class MainFrame extends JFrame {
 							@Override
 		                    public void actionPerformed(ActionEvent ae) {
 		                        if (n == times) {
+		                        	long endTime = System.currentTimeMillis();
 		                        	solveTimer.stop();
 		                        	stopTimer();
 		                        	glassPane.deactivate();
 		                        	MainFrame.this.repaint();
 		                        	glassPane.getStopButton().removeActionListener(cancelButtonAction);
+		                        	solverManager.getSolverStatistics().setElapsedTime((endTime-startTime)/1000f);
 		                        	solverManager.getSolverStatistics().consolidate();
 		                        	JOptionPane.showMessageDialog(panel, solverManager.getSolverStatistics(), "Solver Statistics", JOptionPane.INFORMATION_MESSAGE, SquareImages.getInstance().getIcons().get("stat"));
 		                        } else {
@@ -298,6 +301,7 @@ public class MainFrame extends JFrame {
 		                solveTimer = new Timer(10, solveSingleGrid);
 		                solveTimer.setRepeats(true);
 		                solveTimer.start();
+		                startTime = System.currentTimeMillis();
 					} else {
 						System.out.println("Wrong configuration!");
 						JOptionPane.showMessageDialog(panel, "Out of Range!", "Error", JOptionPane.ERROR_MESSAGE);

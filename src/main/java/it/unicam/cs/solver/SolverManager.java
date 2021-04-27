@@ -1,5 +1,8 @@
 package it.unicam.cs.solver;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import it.unicam.cs.enumeration.Difficulty;
 import it.unicam.cs.enumeration.GameState;
 import it.unicam.cs.enumeration.SolveStrategy;
@@ -33,7 +36,8 @@ public class SolverManager {
 
 	public SolverManager(SolveStrategy strategy, Grid grid, boolean shouldRecordStatistics) {
 		try {
-			this.solver = strategy.getSolverClass().getConstructor(Grid.class).newInstance(grid);
+			SolverFactory factory = Class.forName(strategy.getSolverClass().getPackage().getName() + "." + strategy.getSolverClass().getSimpleName() + "Factory").asSubclass(SolverFactory.class).getDeclaredConstructor().newInstance();
+			this.solver = factory.createSolver(grid);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -47,7 +51,8 @@ public class SolverManager {
 	public void updateSolver(Grid grid) {
 		try {
 			this.grid = grid;
-			this.solver = solver.getClass().getConstructor(Grid.class).newInstance(grid);
+			SolverFactory factory = Class.forName(solver.getClass().getPackage().getName() + "." + solver.getClass().getSimpleName() + "Factory").asSubclass(SolverFactory.class).getDeclaredConstructor().newInstance();
+			this.solver = factory.createSolver(grid);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -76,13 +81,15 @@ public class SolverManager {
 
 		SolveStep step = solver.solveByStep();
 		if (step == null) {
-			Location location = getCornerOrRandomLocation();
-			DroolsUtils.getInstance().insertAndFire("UNCOVER", location);
-			if (shouldRecordStatistics) {
-				solverStatistics.increaseTotalNumberOfRandomDecisions();
-				isLastStepRandom = true;
+			List<Location> locationToUncover = new ArrayList<Location>();
+			Location cornerLocation = getCornerLocation();
+			if (cornerLocation != null) {
+				locationToUncover.add(cornerLocation);
+				step = new SolveStep(new ArrayList<Location>(), locationToUncover);
+			} else {
+				locationToUncover.add(getRandomLocation());
+				step = new SolveStep(new ArrayList<Location>(), locationToUncover, true);				
 			}
-			return;
 		}
 		
 		if (step.isStepRandom()) {
@@ -143,8 +150,8 @@ public class SolverManager {
 	 * 
 	 * @return The location corresponding to a covered Square.
 	 */
-	private Location getCornerOrRandomLocation() {
-		Location location;
+	private Location getCornerLocation() {
+		Location location = null;
 		if (grid.getSquareAt(new Location(0, 0)).getState() == SquareState.COVERED) {
 			location = new Location(0, 0);
 		} else if (grid.getSquareAt(new Location(0, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED) {
@@ -153,11 +160,17 @@ public class SolverManager {
 			location = new Location(grid.getConfig().getN_ROWS()-1, grid.getConfig().getN_COLUMNS()-1);
 		} else if (grid.getSquareAt(new Location(grid.getConfig().getN_ROWS()-1, 0)).getState() == SquareState.COVERED) {
 			location = new Location(grid.getConfig().getN_ROWS()-1, 0);
-		} else {
-			do {
-				location = grid.getRandomPoint();
-			} while(grid.getSquareAt(location).getState() != SquareState.COVERED);
 		}
+
+		return location;
+	}
+	
+	private Location getRandomLocation() {
+		Location location;
+		do {
+			location = grid.getRandomPoint();
+		} while(grid.getSquareAt(location).getState() != SquareState.COVERED);
+
 		return location;
 	}
 

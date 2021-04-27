@@ -1,7 +1,7 @@
 package it.unicam.cs.solver;
 
 /**
- * Interface that represent a Minesweeper Solver.
+ * Interface that represents a Minesweeper Solver.
  */
 public interface MinesweeperSolver {
 	/**

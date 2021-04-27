@@ -25,6 +25,8 @@ public class SolverStatistics {
 	
 	private double percentageOfLoseCausedByRandomDecisions = 0;
 	
+	private double totalElapsedTime = 0;
+	
 	public void increaseTotalSolvingTime(double totalTime) {
 		this.totalSolvingTime += totalTime;
 	}
@@ -49,6 +51,10 @@ public class SolverStatistics {
 		this.numberOfRandomDecisionsLeadingToLose += 1;
 	}
 	
+	public void setElapsedTime(double elapsedTime) {
+		this.totalElapsedTime = elapsedTime;
+	}
+	
 	public void consolidate() {
 		this.averageSolvingTime = this.totalSolvingTime / this.numberOfRuns;
 		this.winPercentage = ((double) this.winNumber / this.numberOfRuns) * 100;
@@ -59,17 +65,17 @@ public class SolverStatistics {
 	@Override
 	public String toString() {
 		String s = "";
-		s += String.format("Total Solving Time: %.2fs", this.totalSolvingTime) + System.lineSeparator();
-		s += String.format("Average Solving Time: %.2fs", this.averageSolvingTime) + System.lineSeparator();
+		s += String.format("Total Elapsed Time: %.3fs", this.totalElapsedTime) + System.lineSeparator();
+		s += String.format("Total Solving Time: %.3fs", this.totalSolvingTime) + System.lineSeparator();
+		s += String.format("Average Solving Time: %.3fs", this.averageSolvingTime) + System.lineSeparator();
 		s += System.lineSeparator();
-		s += String.format("Win Percentage: %.2f%%", this.winPercentage) + System.lineSeparator();
-		s += "Wins: " + this.winNumber + System.lineSeparator();
+		s += String.format("Wins: %d (%.2f%%)", this.winNumber, this.winPercentage) + System.lineSeparator();
 		s += "Losses: " + this.loseNumber + System.lineSeparator();
 		s += "Total Runs: " + this.numberOfRuns + System.lineSeparator();
 		s += System.lineSeparator();
 		s += "Total random decisions: " + this.totalNumberOfRandomDecisions + System.lineSeparator();
 		s += String.format("Average random decisions: %.2f", this.averageNumberOfRandomDecisions) + System.lineSeparator();
-		s += String.format("Loss by random decisions: %.2f%%", this.percentageOfLoseCausedByRandomDecisions);
+		s += String.format("Loss by random decisions: %d (%.2f%%)", this.numberOfRandomDecisionsLeadingToLose, this.percentageOfLoseCausedByRandomDecisions);
 		return s;
 	}
 }

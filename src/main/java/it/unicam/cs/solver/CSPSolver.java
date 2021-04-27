@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,6 +23,7 @@ import it.unicam.cs.model.Number;
 
 public class CSPSolver implements MinesweeperSolver {
 
+	/**	Grid used by the Solver to solve the game**/
 	private Grid grid;
 	
 	public CSPSolver(Grid grid) {
@@ -45,7 +47,7 @@ public class CSPSolver implements MinesweeperSolver {
 		frontierUncovered.remove(location);
 		grid.getNeighboursAsStream(location).filter(s -> frontierUncovered.contains(s.getLocation())).map(n -> n.getLocation()).forEach(n -> {
 			partition.addAll(calculateSinglePartition(n));
-		});;
+		});
 		return partition;
 	}
 	
@@ -61,10 +63,11 @@ public class CSPSolver implements MinesweeperSolver {
 
 	@Override
 	public SolveStep solveByStep() {
-		/*SolveStep singlePointStep = new SinglePointSolver(grid).solveByStep();
+		// First check if SinglePoint can be applied
+		SolveStep singlePointStep = new SinglePointSolver(grid).solveByStep();
 		if (singlePointStep != null) {
 			return singlePointStep;
-		}*/
+		}
 		
 		List<Set<Location>> partitions = calculatePartitions();
 		if (partitions.size() == 0) {
@@ -79,7 +82,7 @@ public class CSPSolver implements MinesweeperSolver {
 
 		partitions.stream().sorted((x, y) -> Integer.compare(y.size(), x.size())).forEach(p -> {
 			HashMap<Location, BoolVar> map = new HashMap<Location, BoolVar>();
-			Model model = new Model("Problemone");
+			Model model = new Model("CSP_Model");
 
 			p.forEach(n -> {
 				String varName = String.format("(%d,%d)", n.getRow(), n.getColumn());
@@ -169,36 +172,42 @@ public class CSPSolver implements MinesweeperSolver {
 		});
 		
 		if (locationsToFlag.isEmpty() && locationsToUncover.isEmpty()) {
-			if (grid.getSquareAt(new Location(0, 0)).getState() == SquareState.COVERED) {
-				locationsToUncover.add(new Location(0, 0));
-			} else if (grid.getSquareAt(new Location(0, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED) {
-				locationsToUncover.add(new Location(0, grid.getConfig().getN_COLUMNS()-1));
-			} else if (grid.getSquareAt(new Location(grid.getConfig().getN_ROWS()-1, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED) {
-				locationsToUncover.add(new Location(grid.getConfig().getN_ROWS()-1, grid.getConfig().getN_COLUMNS()-1));
-			} else if (grid.getSquareAt(new Location(grid.getConfig().getN_ROWS()-1, 0)).getState() == SquareState.COVERED) {
-				locationsToUncover.add(new Location(grid.getConfig().getN_ROWS()-1, 0));
-			} else {
-				Set<Location> keys = new HashSet<Location>();
-				keys.addAll(locationWithMineCount.keySet());
-				keys.addAll(locationWithoutMineCount.keySet());
-				Map<Location, Double> finalKeys = new HashMap<Location, Double>();
-				keys.forEach(k -> {
-					int withMineCount = locationWithMineCount.containsKey(k) ? locationWithMineCount.get(k) : 0;
-					int withoutMineCount = locationWithoutMineCount.containsKey(k) ? locationWithoutMineCount.get(k) : 0;
-					if (withMineCount == 0 && withoutMineCount == 0) {
-						finalKeys.put(k, 0.0);
-					} else {
-						finalKeys.put(k, (double)withoutMineCount / (withMineCount+withoutMineCount));
-					}
-				});
-				Optional<Map.Entry<Location, Double>> bestGuess = finalKeys.entrySet().stream().sorted((x, y) -> Double.compare(y.getValue(), x.getValue())).findFirst();
-				if (bestGuess.isPresent()) {
+			if (grid.getSquareAt(new Location(0, 0)).getState() == SquareState.COVERED
+					|| grid.getSquareAt(new Location(0, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED
+					|| grid.getSquareAt(new Location(grid.getConfig().getN_ROWS()-1, grid.getConfig().getN_COLUMNS()-1)).getState() == SquareState.COVERED
+					|| grid.getSquareAt(new Location(grid.getConfig().getN_ROWS()-1, 0)).getState() == SquareState.COVERED) {
+				return null;
+			}
+			
+			Set<Location> keys = new HashSet<Location>();
+			keys.addAll(locationWithMineCount.keySet());
+			keys.addAll(locationWithoutMineCount.keySet());
+			Map<Location, Double> finalKeys = new HashMap<Location, Double>();
+			keys.forEach(k -> {
+				int withMineCount = locationWithMineCount.containsKey(k) ? locationWithMineCount.get(k) : 0;
+				int withoutMineCount = locationWithoutMineCount.containsKey(k) ? locationWithoutMineCount.get(k) : 0;
+				if (withMineCount == 0 && withoutMineCount == 0) {
+					finalKeys.put(k, 0.0);
+				} else {
+					finalKeys.put(k, (double)withoutMineCount / (withMineCount+withoutMineCount));
+				}
+			});
+
+			Optional<Map.Entry<Location, Double>> bestGuess = finalKeys.entrySet().stream().sorted((x, y) -> Double.compare(y.getValue(), x.getValue())).findFirst();
+			if (bestGuess.isPresent()) {
+				List<Map.Entry<Location, Double>> bestGuesses = finalKeys.entrySet().stream().filter(e -> e.getValue().equals(bestGuess.get().getValue())).collect(Collectors.toList());
+				if (bestGuesses.size() == 1) {
 					locationsToUncover.add(bestGuess.get().getKey());
 				} else {
-					return null;
+					int randomGuess = new Random().nextInt(bestGuesses.size());
+					locationsToUncover.add(bestGuesses.get(randomGuess).getKey());
+					return new SolveStep(new ArrayList<Location>(locationsToFlag), new ArrayList<Location>(locationsToUncover), true);
 				}
+			} else {
+				return null;
 			}
-			return new SolveStep(new ArrayList<Location>(locationsToFlag), new ArrayList<Location>(locationsToUncover), true);
+			
+			return new SolveStep(new ArrayList<Location>(locationsToFlag), new ArrayList<Location>(locationsToUncover));
 		}
 
 		return new SolveStep(new ArrayList<Location>(locationsToFlag), new ArrayList<Location>(locationsToUncover));
