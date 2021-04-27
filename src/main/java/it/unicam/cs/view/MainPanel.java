@@ -29,7 +29,7 @@ public class MainPanel extends JPanel {
 	public MainPanel() {}
 
 	private void updateImages() {
-		if (getWidth() == 0 || getHeight() == 0) {
+		if (getWidth() / grid.getConfig().getN_COLUMNS() == 0 || getHeight() / grid.getConfig().getN_ROWS() == 0) {
 			return;
 		}
 		float internalSquareWidth = (float)getWidth() / grid.getConfig().getN_COLUMNS();

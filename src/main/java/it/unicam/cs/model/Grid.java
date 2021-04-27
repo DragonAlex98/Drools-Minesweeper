@@ -17,12 +17,12 @@ import lombok.Getter;
  *
  */
 public class Grid {
+	private final Random RANDOM = new Random();
 	/** Matrix containing the squares **/
 	private Square[][] grid;
 	/** The configuration of the grid **/
 	@Getter
 	private Configuration config;
-	private final Random RANDOM = new Random();
 
 	public Grid(Configuration config) {
 		this.config = config;
@@ -154,6 +154,9 @@ public class Grid {
 	}
 	
 	public GameState getGameState() {
+		if (!isPopulated()) {
+			return GameState.ONGOING;
+		}
 		if (this.getGridAsStream().filter(s -> s.getState() == SquareState.EXPLODED).findAny().isPresent()) {
 			return GameState.LOSS;
 		}

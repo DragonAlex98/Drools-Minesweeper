@@ -22,7 +22,6 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
-import javax.swing.ButtonModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -53,69 +52,39 @@ import it.unicam.cs.utils.SquareImages;
 
 public class MainFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
-	
-	private Grid grid = null;
+
+	private Grid grid = new Grid(Difficulty.BEGINNER.getConfiguration());
 	private MainPanel panel = null;
-	private ButtonModel selectedDifficultyButtonModel = null;
-	private GameState gameState;
-	private Timer timer = null;
-	private Timer solveTimer = null;
 	private int elapsedSeconds = 0;
-	private SolverManager solverManager = null;
+	private Timer elapsedSecondsTimer = null;
+	private Timer solveTimer = null;
 	private MainGlassPane glassPane = new MainGlassPane();
+	private Font customFont = null;
 	
-	public MainFrame(String title, Grid grid) {
-		super(title);
-
-		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		this.setResizable(true);
-		this.setGlassPane(glassPane);
+	public static void main(String[] args) {
+		new MainFrame("Minesweeper");
+	}
+	
+	private Font loadDigitalFont() {
 		try {
-			this.setIconImage(ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/bomb.png")));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		this.addWindowListener(new WindowAdapter() {
-
-			@Override
-			public void windowIconified(WindowEvent e) {
-				if (timer != null && MainFrame.this.grid.isPopulated() && MainFrame.this.gameState == GameState.ONGOING) {
-					timer.stop();
-				}
-				super.windowIconified(e);
-			}
-
-			@Override
-			public void windowDeiconified(WindowEvent e) {
-				if (timer != null && MainFrame.this.grid.isPopulated() && MainFrame.this.gameState == GameState.ONGOING) {
-					timer.start();
-				}
-				super.windowDeiconified(e);
-			}
-		});
-
-		Font customFont = null;
-		try {
-			customFont = Font.createFont(Font.TRUETYPE_FONT, MainFrame.class.getResourceAsStream("/it/unicam/cs/font/digital.ttf")).deriveFont(36f);
+			Font customFont = Font.createFont(Font.TRUETYPE_FONT, MainFrame.class.getResourceAsStream("/it/unicam/cs/font/digital.ttf")).deriveFont(36f);
 			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 			ge.registerFont(customFont);
+			return customFont;
 		} catch (Exception e) {
-			e.printStackTrace();
+			return new Font(Font.MONOSPACED, Font.BOLD, 24);
 		}
-		
-		this.glassPane.getStopButton().setFont(customFont);
-
-		JMenuBar menuBar = new JMenuBar();
-		
-        JMenu gameMenu = new JMenu("Game");
-        
-        // New game button
+	}
+	
+	private JMenu createGameMenu() {
+		JMenu gameMenu = new JMenu("Game");
+		// New game button
         JMenuItem newGameMenuItem = new JMenuItem("New Game");
         newGameMenuItem.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Configuration configuration = MainFrame.this.grid.getConfig();
+				Configuration configuration = grid.getConfig();
 				Grid grid = new Grid(configuration);
 				newGame(grid);
 			}
@@ -133,7 +102,6 @@ public class MainFrame extends JFrame {
 
     			@Override
     			public void actionPerformed(ActionEvent e) {
-    				selectedDifficultyButtonModel = buttonGroup.getSelection();
     				Configuration configuration = difficulty.getConfiguration();
     				Grid grid = new Grid(configuration);
     				newGame(grid);
@@ -142,7 +110,6 @@ public class MainFrame extends JFrame {
             newDifficultyGameMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_1 + difficulty.ordinal(), KeyEvent.CTRL_MASK));
             if (difficulty == Difficulty.BEGINNER) {
 				newDifficultyGameMenuItem.setSelected(true);
-				selectedDifficultyButtonModel = buttonGroup.getSelection();
 			}
             gameMenu.add(newDifficultyGameMenuItem);
         }
@@ -153,16 +120,16 @@ public class MainFrame extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JTextField nRowsField = new JTextField();
-				JTextField nColumnsField = new JTextField();
-				JTextField nBombsField = new JTextField();
+				JTextField nRowsField = new JTextField("5");
+				JTextField nColumnsField = new JTextField("5");
+				JTextField nBombsField = new JTextField("5");
 				Object[] message = {
 				    "N. Rows:", nRowsField,
 				    "N. Columns:", nColumnsField,
 				    "N. Bombs:", nBombsField
 				};
 
-				int option = JOptionPane.showConfirmDialog(null, message, "Custom Grid", JOptionPane.OK_CANCEL_OPTION);
+				int option = JOptionPane.showConfirmDialog(panel, message, "Custom Grid", JOptionPane.OK_CANCEL_OPTION);
 				if (option == JOptionPane.OK_OPTION) {
 					try {
 						int nRows = Integer.parseInt(nRowsField.getText());
@@ -182,183 +149,177 @@ public class MainFrame extends JFrame {
 				} else {
 					System.out.println("New configuration aborted!");
 				}
-				buttonGroup.setSelected(selectedDifficultyButtonModel, true);
 			}
 		});
         customDifficultyGameMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_4, KeyEvent.CTRL_MASK));
         gameMenu.add(customDifficultyGameMenuItem);
         buttonGroup.add(customDifficultyGameMenuItem);
-
-        menuBar.add(gameMenu);
         
-        for (SolveStrategy strategy : SolveStrategy.values()) {
-        	JMenu solverMenu = new JMenu(strategy.getName());
-        	// Solve by step button
-        	JMenuItem solveByStepMenuItem = new JMenuItem(strategy.getName() + " by step");
-            solveByStepMenuItem.addActionListener(new ActionListener() {
+        return gameMenu;
+	}
+	
+	private JMenu createSolverMenu(SolveStrategy strategy) {
+    	JMenu solverMenu = new JMenu(strategy.getName());
+    	// Solve by step button
+    	JMenuItem solveByStepMenuItem = new JMenuItem(strategy.getName() + " by step");
+        solveByStepMenuItem.addActionListener(new ActionListener() {
 
-    			@Override
-    			public void actionPerformed(ActionEvent e) {
-    				if (MainFrame.this.gameState != GameState.ONGOING) {
-    					return; // exit if WIN or LOSS
-    				}
-    				solverManager = new SolverManager(strategy, MainFrame.this.grid);
-    				stopTimer();
-    				solverManager.solveByStep();
-    				MainFrame.this.gameState = MainFrame.this.grid.getGameState();
-    				MainFrame.this.repaint();
-    				fireWinLossRules();
-    			}
-    		});
-            solveByStepMenuItem.setAccelerator(KeyStroke.getKeyStroke(strategy.getSingleStepKey(), KeyEvent.CTRL_MASK));
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (grid.getGameState() != GameState.ONGOING) {
+					return; // exit if WIN or LOSS
+				}
+				SolverManager solverManager = new SolverManager(strategy, grid);
+				stopTimer();
+				solverManager.solveByStep();
+				MainFrame.this.repaint();
+				fireWinLossRules();
+			}
+		});
+        solveByStepMenuItem.setAccelerator(KeyStroke.getKeyStroke(strategy.getSingleStepKey(), KeyEvent.CTRL_MASK));
 
-            // Solve complete button
-            JMenuItem solveMenuItem = new JMenuItem(strategy.getName());
-            solveMenuItem.addActionListener(new ActionListener() {
-            	
-    			@Override
-    			public void actionPerformed(ActionEvent e) {
-    				if (MainFrame.this.gameState != GameState.ONGOING) {
-    					return; // exit if WIN or LOSS
-    				}
+        // Solve complete button
+        JMenuItem solveMenuItem = new JMenuItem(strategy.getName());
+        solveMenuItem.addActionListener(new ActionListener() {
+        	
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (grid.getGameState() != GameState.ONGOING) {
+					return; // exit if WIN or LOSS
+				}
 
-    				solverManager = new SolverManager(strategy, MainFrame.this.grid);
-    				
-    				ActionListener cancelButtonAction = new ActionListener() {
-						
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							solveTimer.stop();
-							stopTimer();
-							glassPane.deactivate();
-							MainFrame.this.repaint();
-							glassPane.getStopButton().removeActionListener(this);
-						}
-					};
-    				
-    				ActionListener solveSingleStep = new ActionListener() {
-    					private boolean solved = false;
+				SolverManager solverManager = new SolverManager(strategy, grid);
+				
+				ActionListener cancelButtonAction = new ActionListener() {
+					
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						solveTimer.stop();
+						stopTimer();
+						glassPane.deactivate();
+						MainFrame.this.repaint();
+						glassPane.getStopButton().removeActionListener(this);
+					}
+				};
+				
+				ActionListener solveSingleStep = new ActionListener() {
+					private boolean solved = false;
 
-    					@Override
-                        public void actionPerformed(ActionEvent ae) {
-                            if (solved) {
-                            	solveTimer.stop();
-                            	stopTimer();
-                            	glassPane.deactivate();
-                            	fireWinLossRules();
-                            	glassPane.getStopButton().removeActionListener(cancelButtonAction);
-                            } else {
-                            	if (MainFrame.this.grid.isPopulated() && MainFrame.this.grid.getGameState() != GameState.ONGOING) {
-                            		solved = true;
-                            		MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
-                            		return;
-                            	}
-                            	solverManager.solveByStep();
-                            	glassPane.getProgressBar().setValue((int) (MainFrame.this.grid.getGridAsStream().filter(s -> s.getState() == SquareState.UNCOVERED).count() * 100 / (MainFrame.this.grid.getConfig().getN_ROWS() * MainFrame.this.grid.getConfig().getN_COLUMNS() - MainFrame.this.grid.getConfig().getN_BOMBS())));
-                            	MainFrame.this.gameState = MainFrame.this.grid.getGameState();
-                            	MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
-                            }
+					@Override
+                    public void actionPerformed(ActionEvent ae) {
+                        if (solved) {
+                        	solveTimer.stop();
+                        	stopTimer();
+                        	glassPane.deactivate();
+                        	fireWinLossRules();
+                        	glassPane.getStopButton().removeActionListener(cancelButtonAction);
+                        } else {
+                        	if (grid.getGameState() != GameState.ONGOING) {
+                        		solved = true;
+                        		panel.paintImmediately(panel.getVisibleRect());
+                        		return;
+                        	}
+                        	solverManager.solveByStep();
+                        	glassPane.getProgressBar().setValue((int) (grid.getGridAsStream().filter(s -> s.getState() == SquareState.UNCOVERED).count() * 100 / (grid.getConfig().getN_ROWS() * grid.getConfig().getN_COLUMNS() - grid.getConfig().getN_BOMBS())));
+                        	panel.paintImmediately(panel.getVisibleRect());
                         }
-                    };
+                    }
+                };
 
-                    glassPane.getProgressBar().setValue(0);
-                    glassPane.activate();
-                    glassPane.getStopButton().addActionListener(cancelButtonAction);
-                    solveTimer = new Timer(500, solveSingleStep);
-                    solveTimer.setRepeats(true);
-                    solveTimer.start();
-    			}
-    		});
-            solveMenuItem.setAccelerator(KeyStroke.getKeyStroke(strategy.getSolveKey(), KeyEvent.CTRL_MASK));
-            
-            // Solve N Times button
-            JMenuItem solveNTimesMenuItem = new JMenuItem(strategy.getName() + " N Times");
-    		solveNTimesMenuItem.addActionListener(new ActionListener() {
+                glassPane.getProgressBar().setValue(0);
+                glassPane.activate();
+                glassPane.getStopButton().addActionListener(cancelButtonAction);
+                solveTimer = new Timer(500, solveSingleStep);
+                solveTimer.setRepeats(true);
+                solveTimer.start();
+			}
+		});
+        solveMenuItem.setAccelerator(KeyStroke.getKeyStroke(strategy.getSolveKey(), KeyEvent.CTRL_MASK));
+        
+        // Solve N Times button
+        JMenuItem solveNTimesMenuItem = new JMenuItem(strategy.getName() + " N Times");
+		solveNTimesMenuItem.addActionListener(new ActionListener() {
 
-    			@Override
-    			public void actionPerformed(ActionEvent e) {
-    				String option = JOptionPane.showInputDialog(null, "N Times (1-1000)");
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String option = JOptionPane.showInputDialog(panel, "N Times (1-1000)", 100);
 
-    				try {
-    					int times = Integer.parseInt(option);
-    					if (times >= 1 && times <= 1000) {
-    						ActionListener cancelButtonAction = new ActionListener() {
-    							
-    							@Override
-    							public void actionPerformed(ActionEvent e) {
-    								solveTimer.stop();
-    								stopTimer();
-    								glassPane.deactivate();
-    								MainFrame.this.repaint();
-    								glassPane.getStopButton().removeActionListener(this);
-    							}
-    						};
-    						
-    						ActionListener solveSingleGrid = new ActionListener() {
-    							private int n = 0;
-    							private boolean solved = false;
+				try {
+					int times = Integer.parseInt(option);
+					if (times >= 1 && times <= 1000) {
+						ActionListener cancelButtonAction = new ActionListener() {
+							
+							@Override
+							public void actionPerformed(ActionEvent e) {
+								solveTimer.stop();
+								stopTimer();
+								glassPane.deactivate();
+								MainFrame.this.repaint();
+								glassPane.getStopButton().removeActionListener(this);
+							}
+						};
 
-    							@Override
-    		                    public void actionPerformed(ActionEvent ae) {
-    		                        if (n == times) {
-    		                        	solveTimer.stop();
-    		                        	stopTimer();
-    		                        	glassPane.deactivate();
-    		                        	MainFrame.this.repaint();
-    		                        	glassPane.getStopButton().removeActionListener(cancelButtonAction);
-    		                        	solverManager.getSolverStatistics().consolidate();
-    		                        	JOptionPane.showMessageDialog(panel, solverManager.getSolverStatistics(), "Solver Statistics", JOptionPane.INFORMATION_MESSAGE, SquareImages.getInstance().getIcons().get("stat"));
-    		                        } else {
-    		                        	if (solved) {
-    		                        		n++;
-    		                        		glassPane.getProgressBar().setValue(n * 100 / times);
-    		                        		solved = false;
-    		                        		MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
-    		                        		return;
-    		                        	}
-    		                        	Grid newGrid = new Grid(MainFrame.this.grid.getConfig());
-    		                        	newGame(newGrid);
-    		                        	solverManager.updateSolver(newGrid);
-    		                        	solverManager.complete();
-    		                        	MainFrame.this.gameState = MainFrame.this.grid.getGameState();
-    		                        	MainFrame.this.panel.paintImmediately(MainFrame.this.panel.getVisibleRect());
-    		                        	solved = true;
-    		                        }
-    		                    }
-    		                };
+						SolverManager solverManager = new SolverManager(strategy, grid, true);
+						ActionListener solveSingleGrid = new ActionListener() {
+							private int n = 0;
+							private boolean solved = false;
 
-    		                solverManager = new SolverManager(strategy, MainFrame.this.grid, true);
-    		                glassPane.getProgressBar().setValue(0);
-    		                glassPane.activate();
-    		                glassPane.getStopButton().addActionListener(cancelButtonAction);
-    		                solveTimer = new Timer(10, solveSingleGrid);
-    		                solveTimer.setRepeats(true);
-    		                solveTimer.start();
-    					} else {
-    						System.out.println("Wrong configuration!");
-    						JOptionPane.showMessageDialog(panel, "Out of Range!", "Error", JOptionPane.ERROR_MESSAGE);
-    					}
-    				} catch (NumberFormatException ex) {
-    					System.out.println("Wrong format!");
-    					if (option != null) {
-    						JOptionPane.showMessageDialog(panel, "Wrong format!", "Error", JOptionPane.ERROR_MESSAGE);
-    					}
-    				}
-    			}
-    		});
-            solveNTimesMenuItem.setAccelerator(KeyStroke.getKeyStroke(strategy.getSolveNTimesKey(), KeyEvent.CTRL_MASK));
-            
-            solverMenu.add(solveByStepMenuItem);       
-            solverMenu.add(solveMenuItem);
-            solverMenu.add(solveNTimesMenuItem);
-            menuBar.add(solverMenu);
-        }
+							@Override
+		                    public void actionPerformed(ActionEvent ae) {
+		                        if (n == times) {
+		                        	solveTimer.stop();
+		                        	stopTimer();
+		                        	glassPane.deactivate();
+		                        	MainFrame.this.repaint();
+		                        	glassPane.getStopButton().removeActionListener(cancelButtonAction);
+		                        	solverManager.getSolverStatistics().consolidate();
+		                        	JOptionPane.showMessageDialog(panel, solverManager.getSolverStatistics(), "Solver Statistics", JOptionPane.INFORMATION_MESSAGE, SquareImages.getInstance().getIcons().get("stat"));
+		                        } else {
+		                        	if (solved) {
+		                        		n++;
+		                        		glassPane.getProgressBar().setValue(n * 100 / times);
+		                        		solved = false;
+		                        		panel.paintImmediately(panel.getVisibleRect());
+		                        		return;
+		                        	}
+		                        	Grid newGrid = new Grid(grid.getConfig());
+		                        	newGame(newGrid);
+		                        	solverManager.updateSolver(newGrid);
+		                        	solverManager.complete();
+		                        	panel.paintImmediately(panel.getVisibleRect());
+		                        	solved = true;
+		                        }
+		                    }
+		                };
 
-		this.setJMenuBar(menuBar);
+		                glassPane.getProgressBar().setValue(0);
+		                glassPane.activate();
+		                glassPane.getStopButton().addActionListener(cancelButtonAction);
+		                solveTimer = new Timer(10, solveSingleGrid);
+		                solveTimer.setRepeats(true);
+		                solveTimer.start();
+					} else {
+						System.out.println("Wrong configuration!");
+						JOptionPane.showMessageDialog(panel, "Out of Range!", "Error", JOptionPane.ERROR_MESSAGE);
+					}
+				} catch (NumberFormatException ex) {
+					System.out.println("Wrong format!");
+					if (option != null) {
+						JOptionPane.showMessageDialog(panel, "Wrong format!", "Error", JOptionPane.ERROR_MESSAGE);
+					}
+				}
+			}
+		});
+        solveNTimesMenuItem.setAccelerator(KeyStroke.getKeyStroke(strategy.getSolveNTimesKey(), KeyEvent.CTRL_MASK));
+        
+        solverMenu.add(solveByStepMenuItem);       
+        solverMenu.add(solveMenuItem);
+        solverMenu.add(solveNTimesMenuItem);
 
-		createNewGameGUI();
-		newGame(grid);
-
+		return solverMenu;
+	}
+	
+	private JPanel createTopPanel() {
 		JPanel topPanel = new JPanel();
 		topPanel.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
@@ -373,9 +334,9 @@ public class MainFrame extends JFrame {
 
 			@Override
 			protected void paintComponent(Graphics g) {
-				int remainingBombsCount = MainFrame.this.grid.getConfig().getN_BOMBS();
-				if (MainFrame.this.grid.isPopulated()) {
-					remainingBombsCount -= MainFrame.this.grid.getGridAsStream().filter(s->s.getState() == SquareState.FLAGGED).count();
+				int remainingBombsCount = grid.getConfig().getN_BOMBS();
+				if (grid.isPopulated()) {
+					remainingBombsCount -= grid.getGridAsStream().filter(s->s.getState() == SquareState.FLAGGED).count();
 				}
 				setText(String.format("%03d", remainingBombsCount));
 				super.paintComponent(g);
@@ -399,7 +360,7 @@ public class MainFrame extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Configuration configuration = MainFrame.this.grid.getConfig();
+				Configuration configuration = grid.getConfig();
 				Grid grid = new Grid(configuration);
 				newGame(grid);
 			}
@@ -429,7 +390,7 @@ public class MainFrame extends JFrame {
 		timerLabel.setForeground(Color.RED);
 		timerLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
 
-		timer = new Timer(1000, new ActionListener() {
+		elapsedSecondsTimer = new Timer(1000, new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -439,22 +400,16 @@ public class MainFrame extends JFrame {
 				timerLabel.repaint();
 			}
 		});
-		timer.setRepeats(true);
+		elapsedSecondsTimer.setRepeats(true);
 
 		topPanel.add(timerLabel, c);
-        
-        this.getContentPane().setLayout(new BorderLayout());
-        this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
-		this.getContentPane().add(this.panel, BorderLayout.CENTER);
-		this.pack();
-		this.setLocationRelativeTo(null);
-		this.setVisible(true);
+		return topPanel;
 	}
 	
 	/**
 	 * Method to create the MainPanel representing the grid.
 	 */
-	private void createNewGameGUI() {
+	private MainPanel createGUIPanel() {
 		MainPanel panel = new MainPanel();
 		panel.addMouseListener(new MouseAdapter() {
 			private boolean mousePressed = false;
@@ -462,7 +417,7 @@ public class MainFrame extends JFrame {
 
 			@Override
 			public void mousePressed(MouseEvent e) {
-				if (MainFrame.this.gameState != GameState.ONGOING) {
+				if (grid.getGameState() != GameState.ONGOING) {
 					return; // exit if WIN or LOSS
 				}
 				if (SwingUtilities.isLeftMouseButton(e) || SwingUtilities.isRightMouseButton(e)) {
@@ -473,7 +428,7 @@ public class MainFrame extends JFrame {
 			
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				if (MainFrame.this.gameState != GameState.ONGOING) {
+				if (grid.getGameState() != GameState.ONGOING) {
 					return; // exit if WIN or LOSS
 				}
 				if (!mousePressed) {
@@ -481,9 +436,9 @@ public class MainFrame extends JFrame {
 				}
 				if (SwingUtilities.isLeftMouseButton(e) || SwingUtilities.isRightMouseButton(e)) { // if L or R click
 					if (panel.getSquareLocation(e.getPoint()).equals(squareLocation)) { // if released location == pressed location
-						if (!MainFrame.this.grid.isPopulated()) { // populate grid if not
-							MainFrame.this.grid.populateSafeGrid(squareLocation);
-							timer.start();
+						if (!grid.isPopulated()) { // populate grid if not
+							grid.populateSafeGrid(squareLocation);
+							elapsedSecondsTimer.start();
 						}
 						if (SwingUtilities.isLeftMouseButton(e)) {
 							if (e.getClickCount() == 1) { // if 1 left click, activate UNCOVER rules
@@ -495,21 +450,74 @@ public class MainFrame extends JFrame {
 						if (SwingUtilities.isRightMouseButton(e)) { // if right click, activate FLAG rules
 							DroolsUtils.getInstance().insertAndFire("FLAG", squareLocation);
 						}
-						MainFrame.this.gameState = MainFrame.this.grid.getGameState(); // update state
 						MainFrame.this.repaint();
-						if (MainFrame.this.gameState != GameState.ONGOING) {
-							timer.stop();
+						if (grid.getGameState() != GameState.ONGOING) {
+							elapsedSecondsTimer.stop();
 							fireWinLossRules();
 						}
-						System.out.println(MainFrame.this.grid);
-						System.out.println(DroolsUtils.getInstance().getKSession().getFactCount());
 					}
 				}
 				mousePressed = false;
 				squareLocation = null;
 			}
 		});
-		this.panel = panel;
+		return panel;
+	}
+	
+	public MainFrame(String title) {
+		super(title);
+
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.setResizable(true);
+		this.setGlassPane(glassPane);
+		try {
+			this.setIconImage(ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/bomb.png")));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		this.addWindowListener(new WindowAdapter() {
+
+			@Override
+			public void windowIconified(WindowEvent e) {
+				if (elapsedSecondsTimer != null && grid.isPopulated() && grid.getGameState() == GameState.ONGOING) {
+					elapsedSecondsTimer.stop();
+				}
+				super.windowIconified(e);
+			}
+
+			@Override
+			public void windowDeiconified(WindowEvent e) {
+				if (elapsedSecondsTimer != null && grid.isPopulated() && grid.getGameState() == GameState.ONGOING) {
+					elapsedSecondsTimer.start();
+				}
+				super.windowDeiconified(e);
+			}
+		});
+
+		this.customFont = loadDigitalFont();
+		
+		this.glassPane.getStopButton().setFont(this.customFont);
+
+		JMenuBar menuBar = new JMenuBar();
+        menuBar.add(this.createGameMenu());
+        for (SolveStrategy strategy : SolveStrategy.values()) {
+        	menuBar.add(this.createSolverMenu(strategy));
+        }
+		this.setJMenuBar(menuBar);
+
+		this.panel = createGUIPanel();
+
+		JPanel topPanel = createTopPanel();
+        
+        this.getContentPane().setLayout(new BorderLayout());
+        this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
+		this.getContentPane().add(this.panel, BorderLayout.CENTER);
+		
+		newGame(grid);
+		
+		this.pack();
+		this.setLocationRelativeTo(null);
+		this.setVisible(true);
 	}
 	
 	/**
@@ -549,12 +557,11 @@ public class MainFrame extends JFrame {
 	 */
 	private void newGame(Grid grid) {
 		DroolsUtils.getInstance().clear();
-		if (timer != null) {
-			timer.stop();
+		if (elapsedSecondsTimer != null) {
+			elapsedSecondsTimer.stop();
 		}
 		this.elapsedSeconds = 0;
 		this.grid = grid;
-		this.gameState = GameState.ONGOING;
 		this.panel.setPreferredSize(determinePreferredDimension());
 		this.pack();
 		//this.setLocationRelativeTo(null);
@@ -567,19 +574,19 @@ public class MainFrame extends JFrame {
 	 */
 	private void stopTimer() {
 		this.elapsedSeconds = 999;
-		this.timer.stop();
+		this.elapsedSecondsTimer.stop();
 	}
 
 	/**
 	 * Method to fire the corresponding rules in case of victory or defeat.
 	 */
 	private void fireWinLossRules() {
-		DroolsUtils.getInstance().fireGroup(this.gameState.name());
+		GameState gameState = grid.getGameState();
+		DroolsUtils.getInstance().fireGroup(gameState.name());
 		this.repaint();
-		if (MainFrame.this.gameState == GameState.LOSS) {
+		if (gameState == GameState.LOSS) {
 			JOptionPane.showMessageDialog(panel, "Bomb Uncovered, You Lose!", "Message", 1,	SquareImages.getInstance().getIcons().get("loss"));
-		}
-		if (MainFrame.this.gameState == GameState.WIN) {
+		} else if (gameState == GameState.WIN) {
 			JOptionPane.showMessageDialog(panel, "Congratulation, You Win!", "Message", 1, SquareImages.getInstance().getIcons().get("win"));
 		}
 	}

@@ -47,7 +47,7 @@
     </dependency>
     <dependency>
       <groupId>org.drools</groupId>
-      <artifactId>drools-decisiontables</artifactId>
+      <artifactId>drools-compiler</artifactId>
       <version>${runtime.version}</version>
     </dependency>
     <dependency>
