@@ -108,10 +108,16 @@ public class Grid {
 		return (int) getNeighboursAsStream(location).filter(s -> s != null && s.getType() == SquareType.BOMB).count();
 	}
 	
+	/**
+	 * Method to populate the grid according to the Configuration, avoiding the
+	 * presence of a bomb in the first clicked Square
+	 * 
+	 * @param location The location represent the first clicked Square.
+	 */
 	public void populateSafeGrid(Location location) {
 		do {
 			populate();
-		} while(getSquareAt(location).getType() == SquareType.BOMB);
+		} while (getSquareAt(location).getType() == SquareType.BOMB);
 		getGridAsStream().forEach(s -> DroolsUtils.getInstance().getKSession().insert(s));
 		DroolsUtils.getInstance().getKSession().getAgenda().getAgendaGroup("register neighbor").setFocus();
 		DroolsUtils.getInstance().getKSession().fireAllRules();
@@ -122,7 +128,7 @@ public class Grid {
 	 */
 	private void populate() {
 		this.grid = new Square[config.getN_ROWS()][config.getN_COLUMNS()];
-
+		// insert bombs
 		for (int i = 0; i < config.getN_BOMBS(); i++) {
 			Location newPoint;
 			do {
@@ -131,7 +137,7 @@ public class Grid {
 			Bomb bomb = new Bomb(newPoint);
 			setSquareAt(bomb, newPoint);
 		}
-
+		// insert empty and number
 		for (int r = 0; r < config.getN_ROWS(); r++) {
 			for (int c = 0; c < config.getN_COLUMNS(); c++) {
 				Location location = new Location(r, c);
@@ -149,10 +155,20 @@ public class Grid {
 		}
 	}
 
+	/**
+	 * Method to check if the Grid is populated.
+	 * 
+	 * @return True if the Grid is populated, false otherwise.
+	 */
 	public boolean isPopulated() {
 		return this.grid == null ? false : true;
 	}
 	
+	/**
+	 * Method to check the State of the Game.
+	 * 
+	 * @return The state of the Game (Ongoing, Loss or Win).
+	 */
 	public GameState getGameState() {
 		if (!isPopulated()) {
 			return GameState.ONGOING;
