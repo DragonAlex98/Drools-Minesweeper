@@ -82,7 +82,7 @@ public class SquareImages {
 			} else if (square.getType() == SquareType.EMPTY) {
 				return "empty";
 			} else if (square.getType() == SquareType.NUMBER) {
-				return ((Number) square).getNumber();
+				return String.valueOf(((Number) square).getNeighbourBombsCount());
 			}
 		}
 		return null;

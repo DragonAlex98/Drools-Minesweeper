@@ -19,15 +19,6 @@ public class Number extends Square {
 		this.neighbourBombsCount = neighbourBombsCount;
 	}
 
-	/**
-	 * Method to return the number representing this Square as a String.
-	 * 
-	 * @return The number representing this Square.
-	 */
-	public String getNumber() {
-		return String.format("%d", neighbourBombsCount);
-	}
-
 	@Override
 	public String toString() {
 		return String.format("[%-9s %d]", this.getState(), neighbourBombsCount);
