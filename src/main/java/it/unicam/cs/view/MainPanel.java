@@ -17,17 +17,27 @@ import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
 import it.unicam.cs.utils.SquareImages;
 
+/**
+ * UI Class used to manage the graphic representation of the Grid as JPanel.
+ *
+ */
 public class MainPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 	
+	/** The actual grid **/
 	private Grid grid;
+	/** The width of a Square (it depends on the size of this JPanel) **/
 	private float squareWidth;
+	/** The height of a Square (it depends on the size of this JPanel) **/
 	private float squareHeight;
-
+	/** Map containing the images of the Square with the right size **/
 	private Map<String, Image> images = new HashMap<String, Image>();
 
 	public MainPanel() {}
 
+	/**
+	 * Method used to update the size of the images, depending on the size of this JPanel.
+	 */
 	private void updateImages() {
 		if (getWidth() / grid.getConfig().getN_COLUMNS() == 0 || getHeight() / grid.getConfig().getN_ROWS() == 0) {
 			return;
@@ -43,6 +53,10 @@ public class MainPanel extends JPanel {
 		squareHeight = internalSquareHeight;
 	}
 
+	/**
+	 * Method used to initialize this JPanel with the grid and the right images.
+	 * @param grid The grid used by this JPanel.
+	 */
 	public void init(Grid grid) {
 		this.grid = grid;
 		addComponentListener(new ComponentAdapter() {
@@ -59,6 +73,12 @@ public class MainPanel extends JPanel {
 		repaint();
 	}
 
+	/**
+	 * Method used to convert a Java AWT Point into a Location.
+	 * 
+	 * @param point The point to convert.
+	 * @return The Location corresponding to the input Point
+	 */
 	public Location getSquareLocation(Point point) {
 		if (grid == null) {
 			return new Location(-1, -1);
@@ -76,13 +96,13 @@ public class MainPanel extends JPanel {
 		}
 		g.setColor(Color.LIGHT_GRAY);
 		g.fillRect(0, 0, getWidth(), getHeight());
-
+		// draw the right Square Images if the grid is populated
 		if (grid.isPopulated()) {
 			grid.getGridAsStream().forEach(s -> {
 				String string = SquareImages.getInstance().getSquareImage(s);
 				g.drawImage(images.get(string), (int)(squareWidth*s.getLocation().getColumn()), (int)(squareHeight*s.getLocation().getRow()), null);
 			});
-		} else {
+		} else { // otherwise draw all covered images
 			Image coveredImage = images.get("covered");
 			for (int r = 0; r < grid.getConfig().getN_ROWS(); r++) {
 				for (int c = 0; c < grid.getConfig().getN_COLUMNS(); c++) {
@@ -90,7 +110,7 @@ public class MainPanel extends JPanel {
 				}
 			}
 		}
-		
+		// draw horizontal and vertical line to separate the square
 		g.setColor(Color.DARK_GRAY);
 		Graphics2D g2d = (Graphics2D) g;
 		g2d.setStroke(new BasicStroke(2));
