@@ -72,6 +72,7 @@ public class MainFrame extends JFrame {
 	private Font customFont = null;
 
 	public static void main(String[] args) {
+		System.setProperty("java.version", "1.8");
 		new MainFrame("Minesweeper");
 	}
 
