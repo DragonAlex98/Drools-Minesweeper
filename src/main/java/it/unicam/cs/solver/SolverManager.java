@@ -22,7 +22,7 @@ public class SolverManager {
 	private MinesweeperSolver solver;
 	/** The grid used by the Solver **/
 	private Grid grid;
-	/** SolverStatistics to store statistics **/
+	/** SolverStatistics used to store statistics **/
 	@Getter
 	private SolverStatistics solverStatistics;
 	/** Whether last SolveStep was chosen randomly **/
@@ -48,6 +48,10 @@ public class SolverManager {
 		}
 	}
 	
+	/**
+	 * Method used to update the Solver using the right Factory.
+	 * @param grid The grid that the Solver will use.
+	 */
 	public void updateSolver(Grid grid) {
 		try {
 			this.grid = grid;
@@ -146,9 +150,9 @@ public class SolverManager {
 
 	/**
 	 * Method to get the location corresponding to a covered Square, taken from one
-	 * of the corners, if available, or in a random way.
+	 * of the corners, if available.
 	 * 
-	 * @return The location corresponding to a covered Square.
+	 * @return The location corresponding to a covered corner Square, null if not available.
 	 */
 	private Location getCornerLocation() {
 		Location location = null;
@@ -165,6 +169,11 @@ public class SolverManager {
 		return location;
 	}
 	
+	/**
+	 * Method to get a random location corresponding to a covered Square.
+	 * 
+	 * @return The location corresponding to a covered Square.
+	 */
 	private Location getRandomLocation() {
 		Location location;
 		do {

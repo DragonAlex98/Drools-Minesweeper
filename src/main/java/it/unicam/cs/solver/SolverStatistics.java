@@ -2,6 +2,11 @@ package it.unicam.cs.solver;
 
 import lombok.NoArgsConstructor;
 
+/**
+ * Class used to keep track of statistics resulting from different execution of
+ * the Minesweeper Solver.
+ *
+ */
 @NoArgsConstructor
 public class SolverStatistics {
 
@@ -55,6 +60,9 @@ public class SolverStatistics {
 		this.totalElapsedTime = elapsedTime;
 	}
 	
+	/**
+	 * Method used to calculate the main statistics to display.
+	 */
 	public void consolidate() {
 		this.averageSolvingTime = this.totalSolvingTime / this.numberOfRuns;
 		this.winPercentage = ((double) this.winNumber / this.numberOfRuns) * 100;
