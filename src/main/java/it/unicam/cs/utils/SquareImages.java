@@ -23,10 +23,12 @@ import lombok.Getter;
  *
  */
 public class SquareImages {
+	
 	private static SquareImages instance = null;
-
+	/** Map that stores all the images used by the UI **/
 	@Getter
 	private final Map<String, BufferedImage> images;
+	/** Map that stores all the gif used by the UI  **/
 	@Getter
 	private final Map<String, Icon> icons;
 
@@ -64,7 +66,7 @@ public class SquareImages {
 	}
 
 	/**
-	 * Method to return the corresponding Image associated to the given Square.
+	 * Method used to return the corresponding Image associated to the given Square.
 	 * 
 	 * @param square The Square to associate the Image with.
 	 * @return The Image associated to the given Square.

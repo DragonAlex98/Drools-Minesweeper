@@ -10,18 +10,22 @@ import org.kie.api.runtime.KieSession;
 
 import lombok.Getter;
 
+/**
+ * Singleton Class used to manage the Drools session and interact with the Working Memory and Rules.
+ *
+ */
 public class DroolsUtils {
+	
 	private static DroolsUtils instance = null;
 
-	@Getter
 	private KieServices ks;
-
-	@Getter
 	private KieContainer kContainer;
-
 	@Getter
 	private KieSession kSession;
 
+	/**
+	 * Method to create a new Drools session
+	 */
 	private void createNewSession() {
 		this.kSession = kContainer.newKieSession("ksession-rules");
 		this.kSession.addEventListener(new RuleRuntimeEventListener() {
