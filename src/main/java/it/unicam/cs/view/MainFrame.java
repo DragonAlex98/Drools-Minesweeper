@@ -8,7 +8,6 @@ import java.awt.Graphics;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -23,7 +22,6 @@ import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
@@ -48,7 +46,7 @@ import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
 import it.unicam.cs.solver.SolverManager;
 import it.unicam.cs.utils.DroolsUtils;
-import it.unicam.cs.utils.SquareImages;
+import it.unicam.cs.utils.ImageUtils;
 
 /**
  * Main Class used to manage the User Interface and its components.
@@ -312,7 +310,7 @@ public class MainFrame extends JFrame {
 									solverManager.getSolverStatistics().consolidate();
 									JOptionPane.showMessageDialog(panel, solverManager.getSolverStatistics(),
 											"Solver Statistics", JOptionPane.INFORMATION_MESSAGE,
-											SquareImages.getInstance().getIcons().get("stat"));
+											ImageUtils.getInstance().getIcons().get("stat"));
 								} else {
 									if (solved) {
 										n++;
@@ -399,8 +397,7 @@ public class MainFrame extends JFrame {
 		c.gridy = 0;
 
 		// Smile Button
-		Icon smileIcon = new ImageIcon(new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/smile.png"))
-				.getImage().getScaledInstance(32, 32, Image.SCALE_DEFAULT));
+		Icon smileIcon = ImageUtils.getInstance().getIcons().get("smile");
 		JButton smileButton = new JButton(smileIcon);
 		smileButton.addActionListener(new ActionListener() {
 
@@ -634,10 +631,10 @@ public class MainFrame extends JFrame {
 		this.repaint();
 		if (gameState == GameState.LOSS) {
 			JOptionPane.showMessageDialog(panel, "Bomb Uncovered, You Lose!", "Message", 1,
-					SquareImages.getInstance().getIcons().get("loss"));
+					ImageUtils.getInstance().getIcons().get("loss"));
 		} else if (gameState == GameState.WIN) {
 			JOptionPane.showMessageDialog(panel, "Congratulation, You Win!", "Message", 1,
-					SquareImages.getInstance().getIcons().get("win"));
+					ImageUtils.getInstance().getIcons().get("win"));
 		}
 	}
 }

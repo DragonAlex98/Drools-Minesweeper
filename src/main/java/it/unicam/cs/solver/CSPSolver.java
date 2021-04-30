@@ -226,6 +226,7 @@ public class CSPSolver implements MinesweeperSolver {
 					return new SolveStep(new ArrayList<Location>(locationsToFlag), new ArrayList<Location>(locationsToUncover), true);
 				}
 			} else {
+				// if a best guess can't be calculated, let the SolverManager uncover a random location
 				return null;
 			}
 			

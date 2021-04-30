@@ -15,7 +15,7 @@ import javax.swing.JPanel;
 
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
-import it.unicam.cs.utils.SquareImages;
+import it.unicam.cs.utils.ImageUtils;
 import lombok.NoArgsConstructor;
 
 /**
@@ -45,7 +45,7 @@ public class MainPanel extends JPanel {
 		float internalSquareWidth = (float)getWidth() / grid.getConfig().getN_COLUMNS();
 		float internalSquareHeight = (float)getHeight() / grid.getConfig().getN_ROWS();
 		images.clear();
-		SquareImages.getInstance().getImages().forEach((k, v) -> {
+		ImageUtils.getInstance().getImages().forEach((k, v) -> {
 			Image coveredImageResized = v.getScaledInstance((int)internalSquareWidth, (int)internalSquareHeight, Image.SCALE_AREA_AVERAGING);					
 			MainPanel.this.images.put(k, coveredImageResized);
 		});
@@ -99,7 +99,7 @@ public class MainPanel extends JPanel {
 		// draw the right Square Images if the grid is populated
 		if (grid.isPopulated()) {
 			grid.getGridAsStream().forEach(s -> {
-				String string = SquareImages.getInstance().getSquareImage(s);
+				String string = ImageUtils.getInstance().getSquareImage(s);
 				g.drawImage(images.get(string), (int)(squareWidth*s.getLocation().getColumn()), (int)(squareHeight*s.getLocation().getRow()), null);
 			});
 		} else { // otherwise draw all covered images

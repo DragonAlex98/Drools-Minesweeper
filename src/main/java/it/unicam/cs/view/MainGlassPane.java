@@ -17,7 +17,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 
-import it.unicam.cs.utils.SquareImages;
+import it.unicam.cs.utils.ImageUtils;
 import lombok.Getter;
 
 /**
@@ -31,7 +31,7 @@ public class MainGlassPane extends JComponent implements KeyListener {
 	/** Background color of this component **/
 	private static final Color BACKGROUND_COLOR = new Color(255, 255, 255, 96);
 	/** Gif to display while waiting **/
-	private static final JLabel iconLabel = new JLabel(SquareImages.getInstance().getIcons().get("loading"));
+	private static final JLabel iconLabel = new JLabel(ImageUtils.getInstance().getIcons().get("loading"));
 	/** Button used to stop the waiting **/
 	@Getter
 	private JButton stopButton = new JButton("Stop");

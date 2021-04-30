@@ -22,9 +22,9 @@ import lombok.Getter;
  * Singleton class used to load the images representing the different Squares.
  *
  */
-public class SquareImages {
+public class ImageUtils {
 	
-	private static SquareImages instance = null;
+	private static ImageUtils instance = null;
 	/** Map that stores all the images used by the UI **/
 	@Getter
 	private final Map<String, BufferedImage> images;
@@ -32,12 +32,12 @@ public class SquareImages {
 	@Getter
 	private final Map<String, Icon> icons;
 
-	private SquareImages() {
+	private ImageUtils() {
 		this.images = new HashMap<String, BufferedImage>();
 		try {
 			this.images.put("bomb", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/bomb.png")));
-			this.images.put("covered", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/newcovered.png")));
-			this.images.put("empty", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/newempty.png")));
+			this.images.put("covered", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/covered.png")));
+			this.images.put("empty", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/empty.png")));
 			this.images.put("flag", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/flag.png")));
 			this.images.put("expbomb", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/expbomb.png")));
 			this.images.put("1", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/number1.png")));
@@ -56,11 +56,12 @@ public class SquareImages {
 		this.icons.put("loss", new ImageIcon(new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/explosion.gif")).getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT)));
 		this.icons.put("stat", new ImageIcon(new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/stat.png")).getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT)));
 		this.icons.put("loading", new ImageIcon(new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/loading.gif")).getImage().getScaledInstance(128, 128, Image.SCALE_DEFAULT)));
+		this.icons.put("smile", new ImageIcon(new ImageIcon(MainFrame.class.getResource("/it/unicam/cs/images/smile.png")).getImage().getScaledInstance(32, 32, Image.SCALE_DEFAULT)));
 	}
 
-	public static SquareImages getInstance() {
+	public static ImageUtils getInstance() {
 		if (instance == null) {
-			instance = new SquareImages();
+			instance = new ImageUtils();
 		}
 		return instance;
 	}
