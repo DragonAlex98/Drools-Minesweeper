@@ -3,7 +3,6 @@ package it.unicam.cs.solver;
 import java.util.ArrayList;
 import java.util.List;
 
-import it.unicam.cs.enumeration.Difficulty;
 import it.unicam.cs.enumeration.GameState;
 import it.unicam.cs.enumeration.SolveStrategy;
 import it.unicam.cs.enumeration.SquareState;
@@ -36,6 +35,7 @@ public class SolverManager {
 
 	public SolverManager(SolveStrategy strategy, Grid grid, boolean shouldRecordStatistics) {
 		try {
+			// use dynamic class loading to choose the correct factory for the solver
 			SolverFactory factory = Class.forName(strategy.getSolverClass().getPackage().getName() + "." + strategy.getSolverClass().getSimpleName() + "Factory").asSubclass(SolverFactory.class).getDeclaredConstructor().newInstance();
 			this.solver = factory.createSolver(grid);
 		} catch (Exception e) {
@@ -55,6 +55,7 @@ public class SolverManager {
 	public void updateSolver(Grid grid) {
 		try {
 			this.grid = grid;
+			// use dynamic class loading to choose the correct factory for the solver
 			SolverFactory factory = Class.forName(solver.getClass().getPackage().getName() + "." + solver.getClass().getSimpleName() + "Factory").asSubclass(SolverFactory.class).getDeclaredConstructor().newInstance();
 			this.solver = factory.createSolver(grid);
 		} catch (Exception e) {
@@ -78,19 +79,24 @@ public class SolverManager {
 	 * 
 	 */
 	public void solveByStep() {
+		// if the grid is not populated, populate it first and perform firstStep
 		if (!grid.isPopulated()) {
 			this.firstStep();
 			return;
 		}
 
+		// ask the solver for the next step
 		SolveStep step = solver.solveByStep();
+		// if the solver wasn't able to proceed
 		if (step == null) {
 			List<Location> locationToUncover = new ArrayList<Location>();
 			Location cornerLocation = getCornerLocation();
 			if (cornerLocation != null) {
+				// select one of the corners as the next step, if it is still covered
 				locationToUncover.add(cornerLocation);
 				step = new SolveStep(new ArrayList<Location>(), locationToUncover);
 			} else {
+				// otherwise select a random location
 				locationToUncover.add(getRandomLocation());
 				step = new SolveStep(new ArrayList<Location>(), locationToUncover, true);				
 			}
@@ -103,6 +109,7 @@ public class SolverManager {
 			}
 		}
 
+		// flag and uncover any square found by the solver in the last step
 		step.getLocationsToFlag().forEach(f -> {
 			DroolsUtils.getInstance().insertAndFire("FLAG", f);
 		});
@@ -145,7 +152,6 @@ public class SolverManager {
 			}
 			solverStatistics.increaseRun();
 		}
-		//System.out.println("Win: " + win + ", Lose: " + lose + ", Win Rate: " + (double) win / (win + lose) * 100f);
 	}
 
 	/**
@@ -181,18 +187,5 @@ public class SolverManager {
 		} while(grid.getSquareAt(location).getState() != SquareState.COVERED);
 
 		return location;
-	}
-
-	public static void main(String[] args) throws Exception {
-		Grid grid = new Grid(Difficulty.EXPERT.getConfiguration());
-		SolverManager manager = new SolverManager(SolveStrategy.CSP, grid, true);
-		for (int i = 0; i < 1000; i++) {
-			DroolsUtils.getInstance().clear();
-			Grid newGrid = new Grid(manager.grid.getConfig());
-			manager.updateSolver(newGrid);
-			manager.complete();
-		}
-		manager.getSolverStatistics().consolidate();
-		System.out.println(manager.getSolverStatistics());
 	}
 }

@@ -16,11 +16,13 @@ import javax.swing.JPanel;
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
 import it.unicam.cs.utils.SquareImages;
+import lombok.NoArgsConstructor;
 
 /**
  * UI Class used to manage the graphic representation of the Grid as JPanel.
  *
  */
+@NoArgsConstructor
 public class MainPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 	
@@ -32,8 +34,6 @@ public class MainPanel extends JPanel {
 	private float squareHeight;
 	/** Map containing the images of the Square with the right size **/
 	private Map<String, Image> images = new HashMap<String, Image>();
-
-	public MainPanel() {}
 
 	/**
 	 * Method used to update the size of the images, depending on the size of this JPanel.
@@ -110,7 +110,7 @@ public class MainPanel extends JPanel {
 				}
 			}
 		}
-		// draw horizontal and vertical line to separate the square
+		// draw horizontal and vertical lines to separate the squares
 		g.setColor(Color.DARK_GRAY);
 		Graphics2D g2d = (Graphics2D) g;
 		g2d.setStroke(new BasicStroke(2));

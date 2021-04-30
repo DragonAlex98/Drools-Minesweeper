@@ -22,6 +22,7 @@ import lombok.Getter;
 
 /**
  * UI Class used to manage the graphic representation of a waiting phase as JComponent.
+ * When the GlassPane is activated, it will consume any mouse/keyboard-related event.
  *
  */
 public class MainGlassPane extends JComponent implements KeyListener {

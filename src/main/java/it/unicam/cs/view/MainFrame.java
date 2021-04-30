@@ -72,6 +72,7 @@ public class MainFrame extends JFrame {
 	private Font customFont = null;
 
 	public static void main(String[] args) {
+		// to make Drools work with Java >= 8
 		System.setProperty("java.version", "1.8");
 		new MainFrame("Minesweeper");
 	}
@@ -611,7 +612,7 @@ public class MainFrame extends JFrame {
 		this.grid = grid;
 		this.panel.setPreferredSize(determinePreferredDimension());
 		this.pack();
-		// this.setLocationRelativeTo(null);
+		this.setLocationRelativeTo(null);
 		this.panel.init(grid);
 		this.repaint();
 	}
