@@ -13,10 +13,13 @@ import java.util.Map;
 
 import javax.swing.JPanel;
 
+import it.unicam.cs.enumeration.SquareState;
 import it.unicam.cs.model.Grid;
 import it.unicam.cs.model.Location;
 import it.unicam.cs.utils.ImageUtils;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * UI Class used to manage the graphic representation of the Grid as JPanel.
@@ -34,6 +37,10 @@ public class MainPanel extends JPanel {
 	private float squareHeight;
 	/** Map containing the images of the Square with the right size **/
 	private Map<String, Image> images = new HashMap<String, Image>();
+	/** Location the mouse is currently pressing **/
+	@Getter
+	@Setter
+	private Location pressedLocation = null;
 
 	/**
 	 * Method used to update the size of the images, depending on the size of this JPanel.
@@ -83,6 +90,9 @@ public class MainPanel extends JPanel {
 		if (grid == null) {
 			return new Location(-1, -1);
 		}
+		if (point.x < 0 || point.y < 0) {
+			return new Location(-1, -1);
+		}
 		return new Location((int) (point.y / squareHeight), (int) (point.x / squareWidth));
 	}
 	
@@ -109,6 +119,10 @@ public class MainPanel extends JPanel {
 					g.drawImage(coveredImage, (int)(squareWidth*c), (int)(squareHeight*r), null);
 				}
 			}
+		}
+		// draw pressed location
+		if (pressedLocation != null && (!grid.isPopulated() || grid.getSquareAt(pressedLocation).getState() == SquareState.COVERED)) {
+			g.drawImage(images.get("pressed"), (int)(squareWidth*pressedLocation.getColumn()), (int)(squareHeight*pressedLocation.getRow()), null);
 		}
 		// draw horizontal and vertical lines to separate the squares
 		g.setColor(Color.DARK_GRAY);

@@ -40,6 +40,7 @@ public class ImageUtils {
 			this.images.put("empty", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/empty.png")));
 			this.images.put("flag", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/flag.png")));
 			this.images.put("expbomb", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/expbomb.png")));
+			this.images.put("pressed", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/pressed.png")));
 			this.images.put("1", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/number1.png")));
 			this.images.put("2", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/number2.png")));
 			this.images.put("3", ImageIO.read(MainPanel.class.getResource("/it/unicam/cs/images/number3.png")));

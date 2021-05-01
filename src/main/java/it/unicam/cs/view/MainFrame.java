@@ -14,6 +14,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
@@ -68,6 +69,8 @@ public class MainFrame extends JFrame {
 	private MainGlassPane glassPane = new MainGlassPane();
 	/** Font used to render text **/
 	private Font customFont = null;
+	/** Whether the left mouse button is pressed **/
+	private boolean leftMouseButtonPressed = false;
 
 	public static void main(String[] args) {
 		// to make Drools work with Java >= 8
@@ -454,55 +457,128 @@ public class MainFrame extends JFrame {
 	 */
 	private MainPanel createGUIPanel() {
 		MainPanel panel = new MainPanel();
-		panel.addMouseListener(new MouseAdapter() {
-			private boolean mousePressed = false;
-			private Location squareLocation = null;
 
+		panel.addMouseMotionListener(new MouseMotionAdapter() {
+			// used to always press the current location when the left mouse button is pressed
+			@Override
+			public void mouseDragged(MouseEvent e) {
+				if (grid.getGameState() != GameState.ONGOING) {
+					return; // exit if WIN or LOSS
+				}
+				if (!leftMouseButtonPressed) {
+					return;
+				}
+				if (SwingUtilities.isLeftMouseButton(e)) {
+					Location clickedLocation = panel.getSquareLocation(e.getPoint());
+					if (!grid.isLocationInsideGrid(clickedLocation)) {
+						return;
+					}
+					if (panel.getPressedLocation() != null && !panel.getPressedLocation().equals(clickedLocation)) {
+						panel.setPressedLocation(panel.getSquareLocation(e.getPoint()));
+						panel.repaint();
+					}
+				}
+			}
+		});
+
+		panel.addMouseListener(new MouseAdapter() {
+			// when entering the panel, draw the pressed location, if the left mouse button is pressed
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				if (grid.getGameState() != GameState.ONGOING) {
+					return; // exit if WIN or LOSS
+				}
+				if (!leftMouseButtonPressed) {
+					return;
+				}
+				panel.setPressedLocation(panel.getSquareLocation(e.getPoint()));
+				panel.repaint();
+			}
+
+			// when exiting the panel, stop drawing the pressed location
+			@Override
+			public void mouseExited(MouseEvent e) {
+				if (grid.getGameState() != GameState.ONGOING) {
+					return; // exit if WIN or LOSS
+				}
+				if (!leftMouseButtonPressed) {
+					return;
+				}
+				panel.setPressedLocation(null);
+				panel.repaint();
+			}
+
+			// if right mouse button is pressed, flag the location the mouse is on and "consume"
+			// eventual left mouse button click. If left mouse button is pressed, set the corresponding
+			// boolean variable to true
 			@Override
 			public void mousePressed(MouseEvent e) {
 				if (grid.getGameState() != GameState.ONGOING) {
 					return; // exit if WIN or LOSS
 				}
 				if (SwingUtilities.isLeftMouseButton(e) || SwingUtilities.isRightMouseButton(e)) {
-					mousePressed = true; // if L or R is pressed, save pressed location
-					squareLocation = panel.getSquareLocation(e.getPoint());
+					if (e.getY() < 0) {
+	                    return;
+	                }
+					Location clickedLocation = panel.getSquareLocation(e.getPoint());
+					if (!grid.isLocationInsideGrid(clickedLocation)) {
+						return;
+					}
+					if (SwingUtilities.isRightMouseButton(e)) {
+						if (!grid.isPopulated()) { // populate grid if not
+							grid.populateSafeGrid(clickedLocation);
+							elapsedSecondsTimer.start();
+						}
+						DroolsUtils.getInstance().insertAndFire("FLAG", clickedLocation);
+						leftMouseButtonPressed = false;
+						panel.setPressedLocation(null);
+						panel.repaint();
+						return;
+					}
+					if (SwingUtilities.isLeftMouseButton(e)) {
+						leftMouseButtonPressed = true; // if left is pressed, save pressed location
+						panel.setPressedLocation(clickedLocation);
+						panel.repaint();
+					}
 				}
 			}
 
+			// we only care about the release of the left mouse button (1 or 2 clicks),
+			// since the right mouse button is handled in the mousePressed method
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				if (grid.getGameState() != GameState.ONGOING) {
 					return; // exit if WIN or LOSS
 				}
-				if (!mousePressed) {
+				if (!leftMouseButtonPressed) {
 					return; // exit if mouse is not pressed
 				}
-				if (SwingUtilities.isLeftMouseButton(e) || SwingUtilities.isRightMouseButton(e)) { // if L or R click
-					if (panel.getSquareLocation(e.getPoint()).equals(squareLocation)) { // if released location ==
-																						// pressed location
-						if (!grid.isPopulated()) { // populate grid if not
-							grid.populateSafeGrid(squareLocation);
-							elapsedSecondsTimer.start();
-						}
-						if (SwingUtilities.isLeftMouseButton(e)) {
-							if (e.getClickCount() == 1) { // if 1 left click, activate UNCOVER rules
-								DroolsUtils.getInstance().insertAndFire("UNCOVER", squareLocation);
-							} else if (e.getClickCount() == 2) { // if 2 left click, activate CHORD rules
-								DroolsUtils.getInstance().insertAndFire("CHORD", squareLocation);
-							}
-						}
-						if (SwingUtilities.isRightMouseButton(e)) { // if right click, activate FLAG rules
-							DroolsUtils.getInstance().insertAndFire("FLAG", squareLocation);
-						}
-						MainFrame.this.repaint();
-						if (grid.getGameState() != GameState.ONGOING) {
-							elapsedSecondsTimer.stop();
-							fireWinLossRules();
-						}
+				panel.setPressedLocation(null);
+				panel.repaint();
+				if (SwingUtilities.isLeftMouseButton(e)) { // if left click
+					leftMouseButtonPressed = false;
+					if (e.getY() < 0) {
+	                    return;
+	                }
+					Location clickedLocation = panel.getSquareLocation(e.getPoint());
+					if (!grid.isLocationInsideGrid(clickedLocation)) {
+						return;
+					}
+					if (!grid.isPopulated()) { // populate grid if not
+						grid.populateSafeGrid(clickedLocation);
+						elapsedSecondsTimer.start();
+					}
+					if (e.getClickCount() == 1) { // if 1 left click, activate UNCOVER rules
+						DroolsUtils.getInstance().insertAndFire("UNCOVER", clickedLocation);
+					} else if (e.getClickCount() == 2) { // if 2 left click, activate CHORD rules
+						DroolsUtils.getInstance().insertAndFire("CHORD", clickedLocation);
+					}
+					MainFrame.this.repaint();
+					if (grid.getGameState() != GameState.ONGOING) {
+						elapsedSecondsTimer.stop();
+						fireWinLossRules();
 					}
 				}
-				mousePressed = false;
-				squareLocation = null;
 			}
 		});
 		return panel;
@@ -521,6 +597,7 @@ public class MainFrame extends JFrame {
 		}
 		this.addWindowListener(new WindowAdapter() {
 
+			// stop game timer, if running, when minimizing window
 			@Override
 			public void windowIconified(WindowEvent e) {
 				if (elapsedSecondsTimer != null && grid.isPopulated() && grid.getGameState() == GameState.ONGOING) {
@@ -529,12 +606,22 @@ public class MainFrame extends JFrame {
 				super.windowIconified(e);
 			}
 
+			// restart game timer, if running, when restoring window
 			@Override
 			public void windowDeiconified(WindowEvent e) {
 				if (elapsedSecondsTimer != null && grid.isPopulated() && grid.getGameState() == GameState.ONGOING) {
 					elapsedSecondsTimer.start();
 				}
 				super.windowDeiconified(e);
+			}
+			
+			// when the window is deactivated (no longer the active window),
+			// stop drawing pressed location
+			@Override
+			public void windowDeactivated(WindowEvent e) {
+				leftMouseButtonPressed = false;
+				panel.setPressedLocation(null);
+				panel.repaint();
 			}
 		});
 

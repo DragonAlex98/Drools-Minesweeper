@@ -91,7 +91,7 @@ public class Grid {
 	 * @param location The location to check.
 	 * @return True if the location is inside the grid, false otherwise.
 	 */
-	private boolean isLocationInsideGrid(Location location) {
+	public boolean isLocationInsideGrid(Location location) {
 		return location.getRow() >= 0 && location.getRow() < config.getN_ROWS() && location.getColumn() >= 0
 				&& location.getColumn() < config.getN_COLUMNS();
 	}
