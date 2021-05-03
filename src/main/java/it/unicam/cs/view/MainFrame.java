@@ -696,7 +696,7 @@ public class MainFrame extends JFrame {
 		this.grid = grid;
 		this.panel.setPreferredSize(determinePreferredDimension());
 		this.pack();
-		this.setLocationRelativeTo(null);
+		this.setLocationRelativeTo(this);
 		this.panel.init(grid);
 		this.repaint();
 	}
