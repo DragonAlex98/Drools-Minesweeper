@@ -532,7 +532,7 @@ public class MainFrame extends JFrame {
 						DroolsUtils.getInstance().insertAndFire("FLAG", clickedLocation);
 						leftMouseButtonPressed = false;
 						panel.setPressedLocation(null);
-						panel.repaint();
+						MainFrame.this.repaint();
 						return;
 					}
 					if (SwingUtilities.isLeftMouseButton(e)) {
