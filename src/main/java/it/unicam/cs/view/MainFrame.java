@@ -568,7 +568,9 @@ public class MainFrame extends JFrame {
 						grid.populateSafeGrid(clickedLocation);
 						elapsedSecondsTimer.start();
 					}
-					if (e.getClickCount() == 1) { // if 1 left click, activate UNCOVER rules
+					if (e.getClickCount() <= 1) {
+						// if 0 or 1 left click, activate UNCOVER rules. It must accept also 0 for it to work on Mac/Linux,
+						// since releasing a mouse in a different location than where it was pressed doesn't count as a click
 						DroolsUtils.getInstance().insertAndFire("UNCOVER", clickedLocation);
 					} else if (e.getClickCount() == 2) { // if 2 left click, activate CHORD rules
 						DroolsUtils.getInstance().insertAndFire("CHORD", clickedLocation);
