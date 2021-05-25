@@ -18,10 +18,12 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
+import javax.swing.ButtonModel;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
@@ -118,6 +120,7 @@ public class MainFrame extends JFrame {
 		gameMenu.addSeparator();
 
 		// Beginner/Intermediate/Expert button group
+		AtomicReference<ButtonModel> oldConfigurationButtonModel = new AtomicReference<ButtonModel>();
 		ButtonGroup buttonGroup = new ButtonGroup();
 		for (Difficulty difficulty : Difficulty.values()) {
 			JCheckBoxMenuItem newDifficultyGameMenuItem = new JCheckBoxMenuItem(
@@ -128,6 +131,7 @@ public class MainFrame extends JFrame {
 
 				@Override
 				public void actionPerformed(ActionEvent e) {
+					oldConfigurationButtonModel.set(newDifficultyGameMenuItem.getModel());
 					Configuration configuration = difficulty.getConfiguration();
 					Grid grid = new Grid(configuration);
 					newGame(grid);
@@ -137,6 +141,7 @@ public class MainFrame extends JFrame {
 					.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_1 + difficulty.ordinal(), KeyEvent.CTRL_MASK));
 			if (difficulty == Difficulty.BEGINNER) {
 				newDifficultyGameMenuItem.setSelected(true);
+				oldConfigurationButtonModel.set(newDifficultyGameMenuItem.getModel());
 			}
 			gameMenu.add(newDifficultyGameMenuItem);
 		}
@@ -160,17 +165,20 @@ public class MainFrame extends JFrame {
 						int nBombs = Integer.parseInt(nBombsField.getText());
 						Configuration configuration = new Configuration(nRows, nColumns, nBombs);
 						if (checkConfigurationValidity(configuration)) {
+							oldConfigurationButtonModel.set(customDifficultyGameMenuItem.getModel());
 							Grid grid = new Grid(configuration);
 							newGame(grid);
 							return;
 						} else {
-							System.out.println("Wrong configuration!");
+							buttonGroup.setSelected(oldConfigurationButtonModel.get(), true);
+							JOptionPane.showMessageDialog(panel, "Wrong configuration!", "Error", JOptionPane.ERROR_MESSAGE);
 						}
 					} catch (NumberFormatException ex) {
-						System.out.println("Wrong format!");
+						buttonGroup.setSelected(oldConfigurationButtonModel.get(), true);
+						JOptionPane.showMessageDialog(panel, "Wrong format!", "Error", JOptionPane.ERROR_MESSAGE);
 					}
 				} else {
-					System.out.println("New configuration aborted!");
+					buttonGroup.setSelected(oldConfigurationButtonModel.get(), true);
 				}
 			}
 		});
@@ -340,11 +348,9 @@ public class MainFrame extends JFrame {
 						solveTimer.start();
 						startTime = System.currentTimeMillis();
 					} else {
-						System.out.println("Wrong configuration!");
 						JOptionPane.showMessageDialog(panel, "Out of Range!", "Error", JOptionPane.ERROR_MESSAGE);
 					}
 				} catch (NumberFormatException ex) {
-					System.out.println("Wrong format!");
 					if (option != null) {
 						JOptionPane.showMessageDialog(panel, "Wrong format!", "Error", JOptionPane.ERROR_MESSAGE);
 					}
